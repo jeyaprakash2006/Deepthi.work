@@ -1,0 +1,32 @@
+{
+  "name": "question-paper-formatter",
+  "private": true,
+  "version": "1.1.0",
+  "type": "module",
+  "description": "Clone a question paper's layout, pour any input into it, and export print-ready A4",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "fflate": "^0.8.2",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
+    "pdfjs-dist": "^5.0.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tesseract.js": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "^5.8.0",
+    "vite": "^7.0.0",
+    "vitest": "^3.2.0"
+  }
+}
