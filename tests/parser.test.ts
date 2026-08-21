@@ -342,7 +342,7 @@ describe('default style tokens', () => {
     expect(DEFAULT_TOKENS.headingScale).toBe(1)
     expect(DEFAULT_TOKENS.baseFontSize).toBe(10)
     expect(DEFAULT_TOKENS.lineHeight).toBe(1)
-    expect(DEFAULT_TOKENS.cellPadding.bottom).toBe(4)
+    expect(DEFAULT_TOKENS.cellPadding.bottom).toBe(3)
   })
 })
 
@@ -445,4 +445,68 @@ describe('item renumbering', () => {
     const before = [{ title: 'Item 1' }, { title: 'Item 2' }]
     expect(renumberItems(before)).toEqual(before)
   })
+})
+
+describe('cleanExamTitle and OCR normalization', () => {
+  it('cleans mobile OCR errors and splits exam title from degree class info', () => {
+    const raw = `Manonmaniam Sundaranar University
+Department of Chemistry
+linternal TEST - I-M.Sc., Chemistry
+Structure and Bonding in Inorganic Compounds
+DATE: 21.08.2025 Marks: 25
+Part-A
+1. What is the energy band gap in a conductor? (K2, CO3, PO2)`
+    const tokens = extractStyleTokens(raw)
+    // Only the actual exam title is kept on the exam title line
+    expect(tokens.examTitle).toBe('I-INTERNAL TEST')
+    expect(tokens.semester).toBe('I')
+    expect(tokens.institution).toBe('Manonmaniam Sundaranar University')
+    expect(tokens.department).toBe('Department of Chemistry')
+
+    const paper = parseRawText(raw)
+    expect(paper.header.examTitle).toBe('I-INTERNAL TEST')
+    expect(paper.header.semester).toBe('I')
+    expect(paper.header.courseTitle).toBe('Structure and Bonding in Inorganic Compounds')
+  })
+
+  it('normalizes l-internal, 1-internal, |-internal to I-INTERNAL and extracts degree', () => {
+    const raw = `University of Madras
+Department of Physics
+l-INTERNAL TEST - l-M.Sc., Physics
+Part-A
+1. Define crystal lattice.`
+    const tokens = extractStyleTokens(raw)
+    expect(tokens.examTitle).toBe('I-INTERNAL TEST')
+    expect(tokens.semester).toBe('I')
+  })
+
+describe('total marks', () => {
+  const paper = `Part A - Answer all questions (1 x 4 = 4)
+What is the general formula for mononuclear metal carbonyls?
+What is the bond angle of nickel tetracarbonyl?
+Ferrocene is an internal reference in which type of study?
+Which types of bonds are present in organometallic compounds?
+Part B - Answer any one question (1 x 5 = 5)
+Write down the general properties of metal carbonyls.
+Explain the preparation of Ni(CO)4 and Fe(CO)5.
+Part C - Answer any two questions (2 x 8 = 16)
+Explain the structure and uses of ferrocene.
+Draw the structures of the following: a) Diiron nonacarbonyl
+b) Triiron dodecacarbonyl
+Define polynuclear carbonyls.`
+
+  it('is what the parts say they are worth, not every question printed', () => {
+    // Part B prints two to choose one from, Part C three for two.
+    expect(parseRawText(paper).totalMarks).toBe(25)
+  })
+
+  it('uses what is there when fewer questions are pasted than stated', () => {
+    const partial = parseRawText('PART A (10 x 2 = 20 Marks)\n1. What is a diode?\n2. What is a BJT?')
+    expect(partial.totalMarks).toBe(4)
+  })
+
+  it('adds questions up when a part states no formula', () => {
+    expect(parseRawText('PART A\n1. First (5)\n2. Second (8)').totalMarks).toBe(13)
+  })
+})
 })

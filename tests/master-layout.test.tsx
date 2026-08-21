@@ -29,6 +29,7 @@ Answer any two questions 2x8=16
 
 const tokens: StyleTokens = {
   ...DEFAULT_TOKENS,
+  metaColumns: ['level', 'co', 'po'],
   institution: 'Manonmaniam Sundaranar University',
   department: 'Department of Chemistry',
   examTitle: 'I-INTERNAL TEST - I-M.Sc., Chemistry',

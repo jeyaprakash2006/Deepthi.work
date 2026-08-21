@@ -4,31 +4,32 @@
  * header wording and marks-grid layout is applied to every generated item.
  */
 import type { MetaColumn, PaperHeader, StyleTokens } from '../types'
-import { COURSE_CODE_RE, normalizeLines } from './parser'
+import { COURSE_CODE_RE, normalizeLines, splitExamTitleAndClass } from './parser'
 
 export const DEFAULT_TOKENS: StyleTokens = {
   institution: '',
   department: '',
   examTitle: '',
+  degree: '',
   courseCode: '',
   courseTitle: '',
   semester: '',
   duration: '',
-  maxMarks: '',
+  maxMarks: '50',
   regNoLabel: 'Reg. No.',
   date: '',
   fontFamily: 'serif',
   baseFontSize: 10,
   headingScale: 1,
   accent: '#000000',
-  metaColumns: ['level', 'co', 'po'],
+  metaColumns: [],
   colWidths: { no: 40, marks: 52, level: 54, co: 48, po: 48 },
   // Off by default: switching to a half sheet should not silently resize the
   // paper. Turn it on from the preview when you actually want shrink-to-fit.
   autoFit: false,
   autoFitFloor: 0.62,
   pageMargin: { top: 42, right: 100, bottom: 42, left: 100 },
-  cellPadding: { top: 5, right: 7, bottom: 4, left: 7 },
+  cellPadding: { top: 5, right: 7, bottom: 3, left: 7 },
   showCutLine: true,
   groupOffsets: { header: { x: 0, y: 0 }, body: { x: 0, y: 0 } },
   rowMinHeight: 0,
@@ -46,7 +47,7 @@ export const DEFAULT_TOKENS: StyleTokens = {
   showCourseTitleLine: true,
   showFooter: false,
   uppercaseHeadings: false,
-  renumberPerPart: true,
+  renumberPerPart: false,
 }
 
 /**
@@ -81,8 +82,11 @@ export function extractStyleTokens(sourceText: string): Partial<StyleTokens> {
       tokens.department = tidy(line)
       continue
     }
-    if (!tokens.examTitle && /(examination|end semester|internal assessment|model exam|test\b)/i.test(line)) {
-      tokens.examTitle = tidy(line)
+    if (!tokens.examTitle && /(examination|end semester|internal assessment|model exam|test\b|internal\b)/i.test(line)) {
+      const split = splitExamTitleAndClass(tidy(line))
+      tokens.examTitle = split.examTitle
+      if (split.semester && !tokens.semester) tokens.semester = split.semester
+      if (split.classInfo && !tokens.degree) tokens.degree = split.classInfo
       continue
     }
 
@@ -171,6 +175,7 @@ export function resolveHeader(tokens: StyleTokens, header: PaperHeader = {}): Pa
     institution: header.institution?.trim() || tokens.institution.trim(),
     department: header.department?.trim() || tokens.department.trim(),
     examTitle: header.examTitle?.trim() || tokens.examTitle.trim(),
+    degree: header.degree?.trim() || tokens.degree?.trim() || '',
     courseCode: header.courseCode?.trim() || tokens.courseCode.trim(),
     courseTitle: header.courseTitle?.trim() || tokens.courseTitle.trim(),
     semester: header.semester?.trim() || tokens.semester.trim(),

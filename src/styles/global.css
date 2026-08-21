@@ -1,7 +1,7 @@
 /* Clean, modern, high-contrast Light Theme for the Question Paper Formatter */
 
 :root {
-  --bg: #f8fafc;
+  --bg: #f7f9fc;
   --bg-subtle: #f1f5f9;
   --card: #ffffff;
   --card-hi: #f8fafc;
@@ -10,18 +10,18 @@
   --text: #0f172a;
   --dim: #475569;
   --faint: #64748b;
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-tint: rgba(79, 70, 229, 0.08);
-  --primary-line: rgba(79, 70, 229, 0.4);
+  --primary: #2f80ff;
+  --primary-hover: #1f6fe5;
+  --primary-tint: rgba(47, 128, 255, 0.08);
+  --primary-line: rgba(47, 128, 255, 0.4);
   --green: #16a34a;
   --green-strong: #15803d;
   --green-tint: rgba(22, 163, 74, 0.09);
   --green-line: rgba(22, 163, 74, 0.45);
   --danger: #dc2626;
   --danger-tint: rgba(220, 38, 38, 0.08);
-  --radius: 12px;
-  --radius-sm: 8px;
+  --radius: 14px;
+  --radius-sm: 12px;
   --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
@@ -31,7 +31,12 @@
 
 * { box-sizing: border-box; }
 
-html, body, #root { height: 100%; }
+html, body, #root {
+  height: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
 
 body {
   margin: 0;
@@ -41,19 +46,33 @@ body {
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  overflow: hidden;
 }
 
-button { font: inherit; color: inherit; cursor: pointer; }
-input, textarea, select { font: inherit; color: inherit; }
+/* Completely hide all scrollbars throughout the entire app */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; border: 2px solid var(--bg); }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+*::-webkit-scrollbar,
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
 
 /* ---------------------------------------------------------------- shell -- */
 
-.app { display: flex; flex-direction: column; height: 100%; }
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
 
 .topbar {
   display: flex;
@@ -70,10 +89,10 @@ input, textarea, select { font: inherit; color: inherit; }
 .topbar__mark {
   width: 36px; height: 36px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  background: linear-gradient(135deg, #2f80ff, #06b6d4);
   display: grid; place-items: center;
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 2px 6px rgba(47, 128, 255, 0.3);
   flex: none;
 }
 
@@ -166,7 +185,7 @@ input, textarea, select { font: inherit; color: inherit; }
   width: 100%;
 }
 
-.dropzone:hover, .dropzone.is-over { border-color: var(--primary); background: #eef2ff; color: var(--primary); }
+.dropzone:hover, .dropzone.is-over { border-color: var(--primary); background: #eaf2ff; color: var(--primary); }
 .dropzone.is-done { border-color: var(--green-line); background: var(--green-tint); color: var(--green-strong); font-weight: 600; }
 .dropzone.is-error { border-color: #f87171; background: var(--danger-tint); color: var(--danger); }
 .dropzone__title { font-size: 13.5px; font-weight: 650; margin-top: 8px; }
@@ -193,16 +212,16 @@ input, textarea, select { font: inherit; color: inherit; }
 .btn:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; box-shadow: var(--shadow-md); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
 .btn--primary {
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  background: linear-gradient(135deg, #2f80ff, #5b9dff);
   color: #ffffff;
-  border-color: #4f46e5;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.28);
+  border-color: #2f80ff;
+  box-shadow: 0 2px 6px rgba(47, 128, 255, 0.28);
 }
 .btn--primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #4338ca, #4f46e5);
-  border-color: #4338ca;
+  background: linear-gradient(135deg, #1f6fe5, #2f80ff);
+  border-color: #1f6fe5;
   color: #ffffff;
-  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35);
+  box-shadow: 0 4px 10px rgba(47, 128, 255, 0.35);
 }
 .btn--ghost { background: transparent; box-shadow: none; border-color: transparent; }
 .btn--ghost:hover:not(:disabled) { background: #f1f5f9; border-color: var(--border); }
@@ -239,7 +258,7 @@ input, textarea, select { font: inherit; color: inherit; }
 }
 .input:focus, .textarea:focus, .select:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+  box-shadow: 0 0 0 3px rgba(47, 128, 255, 0.12);
 }
 .input::placeholder, .textarea::placeholder { color: #94a3b8; }
 .textarea { resize: vertical; line-height: 1.6; }
@@ -423,10 +442,202 @@ input, textarea, select { font: inherit; color: inherit; }
 }
 .toast--error { background: #991b1b; border-color: #b91c1c; color: #ffffff; }
 
+/* Drawer elements on desktop */
+.topbar__drawer-btn {
+  display: none;
+}
+.drawer-header {
+  display: none;
+}
+.drawer-backdrop {
+  display: none;
+}
+.sidebar-container {
+  display: contents;
+}
+
 @media (max-width: 900px) {
-  .layout { grid-template-columns: 1fr; }
-  .sidebar { border-right: 0; border-bottom: 1px solid var(--border); }
-  .main { padding: 24px 20px 60px; }
+  .layout {
+    display: block;
+    width: 100%;
+  }
+
+  .topbar__drawer-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 13px;
+    font-size: 12px;
+    font-weight: 750;
+    background: #eaf2ff;
+    color: #2f80ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(47, 128, 255, 0.1);
+    transition: all 140ms ease;
+  }
+  .topbar__drawer-btn:hover {
+    background: #d9e8ff;
+    border-color: #a5b4fc;
+  }
+
+  .drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.52);
+    backdrop-filter: blur(3px);
+    z-index: 95;
+    animation: fadeIn 180ms ease;
+  }
+
+  .sidebar-container {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(360px, 88vw);
+    background: #ffffff;
+    z-index: 100;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+    transform: translateX(-100%);
+    transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+  }
+
+  .sidebar-container--open {
+    transform: translateX(0);
+  }
+
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+    background: #f8fafc;
+    flex: none;
+  }
+
+  .drawer-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .drawer-close {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    font-size: 14px;
+    font-weight: bold;
+    color: #334155;
+    cursor: pointer;
+  }
+
+  .sidebar {
+    border-right: 0;
+    border-bottom: 0;
+    height: 100%;
+    overflow-y: auto;
+    padding: 16px 16px 40px;
+  }
+
+  .main {
+    padding: 20px 16px 80px;
+  }
+}
+
+/* Mobile Navigation Bar (Flutter / Material 3 Style) */
+.mobile-nav {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .app {
+    padding-bottom: 68px;
+  }
+
+  .mobile-nav {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
+    z-index: 85;
+    padding: 0 6px;
+    align-items: center;
+  }
+
+  .mobile-nav__btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    padding: 6px 4px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 650;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 150ms ease;
+    height: 52px;
+  }
+
+  .mobile-nav__btn:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+  }
+
+  .mobile-nav__btn--active {
+    color: #2f80ff;
+    background: #eaf2ff;
+    font-weight: 800;
+  }
+
+  .mobile-nav__btn--active svg {
+    stroke-width: 2.2;
+  }
+
+  .mobile-nav__btn--action {
+    color: #ffffff;
+    background: linear-gradient(135deg, #2f80ff, #1f6fe5);
+    box-shadow: 0 3px 8px rgba(47, 128, 255, 0.35);
+  }
+
+  .mobile-nav__btn--action:hover:not(:disabled) {
+    background: linear-gradient(135deg, #1f6fe5, #3730a3);
+    color: #ffffff;
+  }
+
+  .mobile-nav__btn--action:disabled {
+    opacity: 0.5;
+    background: #cbd5e1;
+    color: #64748b;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .mobile-nav__btn--action span {
+    color: inherit;
+  }
 }
 
 .preview__warn {
@@ -456,7 +667,7 @@ input, textarea, select { font: inherit; color: inherit; }
   transition: all 140ms ease;
 }
 .chip:hover { border-color: #94a3b8; background: #e2e8f0; color: #0f172a; }
-.chip--on { background: #4f46e5; border-color: #4f46e5; color: #ffffff; font-weight: 700; box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3); }
+.chip--on { background: #2f80ff; border-color: #2f80ff; color: #ffffff; font-weight: 700; box-shadow: 0 1px 3px rgba(47, 128, 255, 0.3); }
 
 /* Preview toolbar: editing hint on the left, size steppers on the right. */
 .preview__toolbar {
@@ -517,7 +728,7 @@ input, textarea, select { font: inherit; color: inherit; }
 }
 .width-field__row:focus-within {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+  box-shadow: 0 0 0 3px rgba(47, 128, 255, 0.12);
   background: #ffffff;
 }
 .width-field__step {
@@ -663,37 +874,72 @@ input, textarea, select { font: inherit; color: inherit; }
 
 
 /* Page proof: the approved A4 on the left, the tools that shape it on the right. */
-.modal__proof { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 22px; align-items: start; }
+.modal.modal--proof {
+  width: min(1240px, 96vw);
+  max-height: 94vh;
+}
+
+.modal__proof {
+  display: grid;
+  grid-template-columns: 570px minmax(320px, 1fr);
+  gap: 24px;
+  align-items: start;
+  padding: 20px 24px;
+  background: #f1f5f9;
+  overflow-y: auto;
+}
 
 .modal__proof-page {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 14px;
+  gap: 12px;
+  padding: 16px;
   border-radius: var(--radius);
-  background: var(--bg-subtle);
+  background: #cbd5e1;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
 }
+
 .modal__proof-scale {
   width: 556px;   /* A4 794px at 0.7 */
   height: 786px;  /* A4 1123px at 0.7 */
   overflow: hidden;
-  /* A white page on a white panel needs a real edge, not a hairline. */
-  border: 1px solid #94a3b8;
-  border-radius: 2px;
-  box-shadow: var(--shadow-lg);
+  border: 1.5px solid #475569;
+  border-radius: 4px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
   background: #ffffff;
-}
-.modal__proof-scale > .sheet { transform: scale(0.7); transform-origin: top left; }
-.modal__proof-caption {
-  text-align: center;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--faint);
+  position: relative;
 }
 
-.modal__tools { min-width: 0; max-height: 786px; overflow-y: auto; padding-right: 4px; }
+.modal__proof-scale > .sheet {
+  transform: scale(0.7);
+  transform-origin: top left;
+  width: 794px;
+  min-height: 1123px;
+}
+
+.modal__proof-caption {
+  text-align: center;
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.modal__tools {
+  min-width: 0;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 18px;
+  box-shadow: var(--shadow-sm);
+  max-height: 820px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
 @media (max-width: 1200px) {
   .modal__proof { grid-template-columns: minmax(0, 1fr); }
@@ -811,3 +1057,2862 @@ input, textarea, select { font: inherit; color: inherit; }
 }
 .total-box__options { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .total-box__options .chip:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ==================================================================== *
+ * Home — the workbench the site opens on
+ * ==================================================================== */
+
+.home { min-height: 100vh; background: var(--bg); }
+
+.home__bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 32px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.home__mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #fff;
+}
+.home__brand { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+
+.home__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding: 7px 12px;
+  width: min(280px, 40vw);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-subtle);
+  color: var(--faint);
+}
+.home__search:focus-within { border-color: var(--primary-line); background: var(--card); }
+.home__search input { flex: 1; min-width: 0; border: 0; background: none; outline: none; font-size: 13px; color: var(--text); }
+
+.home__main { max-width: 1080px; margin: 0 auto; padding: 40px 32px 80px; }
+
+.home__greet h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.025em; margin: 0; }
+.home__greet p { margin: 6px 0 0; font-size: 14px; color: var(--faint); }
+
+/* ------------------------------------------------------------ resume --- */
+
+.resume {
+  margin-top: 26px;
+  padding: 16px;
+  border: 1px solid var(--primary-line);
+  border-radius: var(--radius);
+  background: var(--primary-tint);
+}
+.resume__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+.resume__row { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+.resume__icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--primary);
+  border: 1px solid var(--primary-line);
+}
+.resume__text { flex: 1; min-width: 0; }
+.resume__title {
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.resume__meta { font-size: 12.5px; color: var(--dim); margin-top: 2px; }
+.resume__arrow { display: inline-flex; transform: rotate(180deg); }
+
+/* ------------------------------------------------------------- tools --- */
+
+.tools { margin-top: 38px; }
+.tools__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.tools__head h2 { font-size: 17px; font-weight: 700; margin: 0; }
+.tools__filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.tools__empty { font-size: 14px; color: var(--faint); }
+
+.tools__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 16px;
+}
+
+.tool {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 18px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+.tool:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-soft);
+}
+
+.tool__icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 2px;
+}
+.tool--indigo .tool__icon { background: rgba(47, 128, 255, 0.1); color: #2f80ff; }
+.tool--green  .tool__icon { background: rgba(22, 163, 74, 0.1); color: #16a34a; }
+.tool--amber  .tool__icon { background: rgba(217, 119, 6, 0.1); color: #d97706; }
+.tool--rose   .tool__icon { background: rgba(225, 29, 72, 0.09); color: #e11d48; }
+.tool--cyan   .tool__icon { background: rgba(8, 145, 178, 0.1); color: #0891b2; }
+
+.tool__name { font-size: 14.5px; font-weight: 700; line-height: 1.35; }
+.tool__blurb { font-size: 12.5px; color: var(--faint); line-height: 1.6; }
+
+.tool__foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+  font-size: 11px;
+}
+.tool__status {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.tool__status--live { color: var(--green-strong); }
+.tool__status--live::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  vertical-align: middle;
+}
+.tool__subject { margin-left: auto; color: var(--faint); }
+
+/* Not built yet: shown so the shape of what is coming is visible, but inert. */
+.tool--soon { cursor: default; box-shadow: none; background: var(--bg-subtle); }
+.tool--soon .tool__icon { filter: grayscale(1); opacity: 0.55; }
+.tool--soon .tool__name { color: var(--dim); }
+
+/* Back to the workbench, from inside a tool. */
+.topbar__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--dim);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.topbar__back:hover { border-color: var(--primary-line); color: var(--primary); background: var(--primary-tint); }
+
+@media (max-width: 700px) {
+  .home__bar { padding: 12px 16px; }
+  .home__main { padding: 28px 16px 60px; }
+  .home__greet h1 { font-size: 24px; }
+}
+
+/* ==================================================================== *
+ * Chemistry Lab Assistant
+ * ==================================================================== */
+
+.chem { min-height: 100vh; background: var(--bg); }
+
+.chem__modules { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+.chem__module {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--faint);
+}
+.chem__module--on { border-color: var(--green-line); background: var(--green-tint); color: var(--green-strong); font-weight: 600; }
+.chem__module em {
+  font-style: normal;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.chem__main { max-width: 1080px; margin: 0 auto; padding: 28px 32px 70px; }
+
+/* ------------------------------------------------ solution preparation --- */
+
+.prep { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+
+.prep__panel,
+.prep__result {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+.prep__result { position: sticky; top: 88px; }
+
+.prep__heading {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.prep__heading--rule { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+.prep__presets { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+
+/* The one number the whole screen exists to produce. */
+.prep__headline { display: flex; align-items: baseline; gap: 10px; }
+.prep__number { font-size: 44px; font-weight: 800; letter-spacing: -0.03em; color: var(--green-strong); line-height: 1; }
+.prep__unit { font-size: 15px; font-weight: 600; color: var(--dim); }
+.prep__sub { margin: 8px 0 0; font-size: 13px; color: var(--faint); }
+
+.prep__facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 18px 0 0; }
+.prep__facts dt { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); }
+.prep__facts dd { margin: 3px 0 0; font-size: 14px; font-weight: 600; }
+
+.prep__steps { margin: 0 0 14px; padding-left: 20px; }
+.prep__steps li { font-size: 13px; line-height: 1.75; color: var(--dim); }
+
+@media (max-width: 900px) {
+  .prep { grid-template-columns: minmax(0, 1fr); }
+  .prep__result { position: static; }
+  .chem__main { padding: 20px 16px 60px; }
+}
+
+/* ==================================================================== *
+ * Phones
+ *
+ * The desktop layout leans on side-by-side columns. On a narrow screen a
+ * two- or three-across grid does not shrink gracefully — it clips the text
+ * inside each field — so the columns collapse rather than compress.
+ * ==================================================================== */
+
+@media (max-width: 640px) {
+  /* Field grids stack instead of squeezing three inputs into 390px. */
+  .grid-2,
+  .grid-3,
+  .width-grid,
+  .prep__facts { grid-template-columns: minmax(0, 1fr) !important; }
+
+  .grid-2 > *,
+  .grid-3 > * { min-width: 0; }
+
+  /* Popup: full-bleed, and a header that wraps instead of colliding. */
+  .modal-backdrop { padding: 0; }
+  .modal { border-radius: 0; width: 100%; max-height: 100%; height: 100%; }
+
+  .modal__head { flex-wrap: wrap; gap: 10px; padding: 14px 16px; }
+  .modal__head-actions { width: 100%; justify-content: flex-end; }
+  .modal__body { padding: 16px; }
+
+  .modal__foot { flex-wrap: wrap; gap: 8px; padding: 12px 16px; }
+  .modal__foot > * { flex: 1 1 auto; }
+  .modal__foot .btn { width: 100%; justify-content: center; }
+
+  /* The question editor becomes a stack: number and text, then the tags. */
+  .q-head { display: none; }
+
+  .q-row,
+  .q-row--sub {
+    grid-template-columns: 56px minmax(0, 1fr) !important;
+    gap: 8px;
+    padding: 12px 0;
+  }
+  .q-row > input:first-child { grid-column: 1; }
+  .q-row > textarea { grid-column: 2; }
+  /* Marks / Level / CO / PO flow under the question, labelled by placeholder. */
+  .q-row > input:not(:first-child) { grid-column: 2; }
+  .q-row__ctl { grid-column: 2; justify-content: flex-end; }
+  .q-row--sub { padding-left: 14px; }
+
+  .part-block { padding: 12px; }
+  .part-block__head { flex-wrap: wrap; }
+  .part-block__head input { max-width: none !important; width: 100%; }
+
+  /* Page proof: let the sheet scale down rather than sit off the edge. */
+  .modal__proof { grid-template-columns: minmax(0, 1fr); }
+  .modal__proof-page { padding: 8px; }
+  .modal__proof-scale { width: 100%; max-width: 100%; height: auto; aspect-ratio: 794 / 1123; }
+  .modal__proof-scale > .sheet { transform: scale(0.42); }
+  .modal__tools { max-height: none; }
+
+  /* Anything that has to be poked with a finger gets a finger-sized box. */
+  .icon-btn { min-width: 34px; min-height: 34px; }
+  .segmented__btn { min-height: 38px; }
+  .chip { padding: 8px 13px; }
+
+  .prep__panel,
+  .prep__result { padding: 16px; }
+  .prep__number { font-size: 36px; }
+
+  /* On a phone the popup runs to the bottom edge, so a bottom-centred toast
+     lands on top of Close and Review. Lift it clear of the footer. */
+  .toast {
+    bottom: auto;
+    top: 14px;
+    left: 12px;
+    right: 12px;
+    transform: none;
+    justify-content: center;
+    text-align: center;
+    border-radius: var(--radius);
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   FLUTTER SINGLE-SCREEN LIVE LAYOUT (teacher_toolkit UI)
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+.flutter-ui {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 54px);
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden !important;
+  overflow-x: hidden !important;
+  background: #f8fafc;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.flutter-ui--fullscreen .flutter-preview-pane {
+  height: 100% !important;
+  flex: 1 !important;
+}
+
+.flutter-ui--fullscreen .flutter-tools-pane {
+  display: none !important;
+}
+
+/* ── TOP: LIVE PREVIEW PANE ── */
+.flutter-preview-pane {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 100vw;
+  background: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.flutter-preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  z-index: 10;
+  flex: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.flutter-preview-bar__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 750;
+  color: #0f172a;
+}
+
+.flutter-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  cursor: pointer;
+  transition: all 140ms ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.flutter-icon-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.flutter-icon-btn--active {
+  background: #eaf2ff;
+  border-color: #2f80ff;
+  color: #2f80ff;
+  box-shadow: 0 0 0 2px rgba(47, 128, 255, 0.18);
+}
+
+.flutter-indicator-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #94a3b8;
+  transition: all 140ms ease;
+}
+
+.flutter-indicator-dot--on {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
+}
+
+.flutter-paper-pager {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 2px 3px;
+  height: 32px;
+  box-sizing: border-box;
+}
+
+.flutter-pager-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 24px;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+  transition: all 120ms ease;
+  padding: 0;
+}
+
+.flutter-pager-arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.flutter-pager-arrow:not(:disabled):hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.flutter-pager-text {
+  font-size: 11px;
+  font-weight: 800;
+  color: #334155;
+  padding: 0 4px;
+  user-select: none;
+}
+
+.flutter-preview-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.flutter-swipe-dots {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  border-radius: 12px;
+  z-index: 10;
+}
+
+.flutter-swipe-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.flutter-swipe-dot--active {
+  background: #ffffff;
+  width: 14px;
+  border-radius: 4px;
+}
+
+.flutter-canvas {
+  flex: 1;
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  background: radial-gradient(#cbd5e1 1px, transparent 1px);
+  background-size: 16px 16px;
+  background-color: #f1f5f9;
+  box-sizing: border-box;
+}
+
+.flutter-sheet-wrapper {
+  box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.2), 0 3px 10px rgba(15, 23, 42, 0.06);
+  border-radius: 3px;
+  background: #ffffff;
+  overflow: hidden !important;
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+}
+
+.flutter-empty-preview {
+  text-align: center;
+  padding: 30px 20px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+/* ── BOTTOM: 5-TAB TOOL PANEL / SHEET ── */
+.flutter-tools-pane {
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  z-index: 20;
+}
+
+.flutter-sheet-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  flex: none;
+}
+
+.flutter-sheet-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.flutter-sheet-close {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 14px;
+  background: #f1f5f9;
+}
+
+/* 4-Tab Navigation Bar (NO horizontal scroll) */
+.flutter-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  width: 100%;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  padding: 4px 6px;
+  flex: none;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.flutter-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 2px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 140ms ease;
+  min-width: 0;
+}
+
+.flutter-tab:hover {
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+.flutter-tab--active {
+  color: #2f80ff;
+  background: #eaf2ff;
+}
+
+.flutter-tab-content {
+  overflow-y: auto;
+  padding: 14px 14px 28px;
+  display: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.flutter-tab-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.flutter-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.flutter-card__head {
+  margin-bottom: 8px;
+}
+
+.flutter-card__title {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.flutter-card__sub {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.flutter-tab-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.flutter-header-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.flutter-segmented--compact {
+  flex: none;
+  width: 160px;
+}
+
+.flutter-grid-degree-subject {
+  display: grid;
+  grid-template-columns: 35% 1fr;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.flutter-checks-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.flutter-check-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+}
+
+.flutter-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 750;
+  color: #334155;
+  cursor: pointer;
+  user-select: none;
+}
+
+.flutter-checkbox-label input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: #2f80ff;
+  cursor: pointer;
+}
+
+.flutter-input--sm {
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
+.flutter-input:disabled {
+  opacity: 0.45;
+  background: #f1f5f9;
+  cursor: not-allowed;
+  border-color: #cbd5e1;
+}
+
+.flutter-btn-trio {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 10px 0;
+}
+
+.flutter-trio-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 6px;
+  font-size: 11.5px;
+  font-weight: 750;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 140ms ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  min-width: 0;
+}
+
+.flutter-trio-btn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.flutter-trio-btn:active {
+  transform: translateY(0);
+}
+
+.flutter-trio-btn--upload {
+  background: linear-gradient(135deg, #3730a3, #2f80ff);
+  color: #ffffff;
+}
+
+.flutter-trio-btn--paste {
+  background: linear-gradient(135deg, #047857, #059669);
+  color: #ffffff;
+}
+
+.flutter-trio-btn--create {
+  background: linear-gradient(135deg, #6d28d9, #7c3aed);
+  color: #ffffff;
+}
+
+/* ── Clean Box-Free Paper Editor in Center Canvas ────────────── */
+.clean-paper-editor {
+  width: 100%;
+  max-width: 780px;
+  height: 100%;
+  overflow-y: auto;
+  padding: 12px 10px 85px 10px;
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+.clean-editor-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.clean-editor-top-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.clean-editor-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.clean-editor-summary {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* ── Clean Editor Accordions & Header Summary ─────────────────── */
+.clean-accordion-card {
+  padding: 10px 14px;
+}
+
+.clean-accordion-head-btn {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.clean-accordion-pill {
+  font-size: 11.5px;
+  font-weight: 750;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  transition: all 140ms ease;
+  line-height: 1;
+}
+
+.clean-accordion-head-btn:hover .clean-accordion-pill {
+  background: #ede9fe;
+  color: #2f80ff;
+  border-color: #c7d2fe;
+}
+
+.clean-accordion-pill--open {
+  background: #ede9fe;
+  color: #2f80ff;
+  border-color: #c7d2fe;
+}
+
+/* 🏛️ Read-only Header Summary List (No inputs, no boxes) */
+.clean-header-summary-list {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.clean-header-summary-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12.5px;
+}
+
+.clean-header-summary-label {
+  font-weight: 750;
+  color: #475569;
+  min-width: 90px;
+  flex: none;
+  font-size: 12px;
+}
+
+.clean-header-summary-val {
+  font-weight: 650;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+.editor-accordion__arrow--open {
+  transform: rotate(90deg);
+  color: #2f80ff;
+}
+
+.editor-accordion__title {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.editor-accordion__hint {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.editor-accordion__body {
+  padding: 12px 14px 14px 14px;
+  background: #fafafa;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.clean-settings-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 750;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.clean-settings-toggle-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.clean-settings-toggle-btn--active {
+  background: #2f80ff;
+  color: #ffffff;
+  border-color: #1f6fe5;
+}
+
+.clean-settings-panel {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.clean-settings-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.clean-settings-title {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.clean-settings-subtitle {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.clean-settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .clean-settings-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+.clean-settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.clean-settings-group-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.clean-settings-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.clean-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: #1e293b;
+  cursor: pointer;
+  background: #ffffff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  transition: all 120ms ease;
+}
+
+.clean-checkbox-label:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.clean-checkbox-label input[type="checkbox"] {
+  margin-top: 2px;
+  cursor: pointer;
+  accent-color: #2f80ff;
+}
+
+.clean-checkbox-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.clean-checkbox-text strong {
+  font-size: 12px;
+  font-weight: 750;
+  color: #0f172a;
+}
+
+.clean-checkbox-text small {
+  font-size: 10.5px;
+  color: #64748b;
+}
+
+.clean-sheet-container {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.clean-part-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.clean-part-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1.5px solid #0f172a;
+  flex-wrap: nowrap;
+}
+
+.clean-part-label {
+  font-size: 13.5px;
+  font-weight: 850;
+  color: #0f172a;
+  text-transform: uppercase;
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 85px;
+  flex: none;
+  padding: 2px 0;
+  letter-spacing: 0.02em;
+}
+
+.clean-header-dot {
+  font-weight: 900;
+  color: #94a3b8;
+  flex: none;
+}
+
+.clean-part-instruction {
+  font-size: 12.5px;
+  font-weight: 600;
+  font-style: italic;
+  color: #334155;
+  border: none;
+  background: transparent;
+  outline: none;
+  flex: 1;
+  min-width: 120px;
+  padding: 2px 0;
+}
+
+.clean-part-formula {
+  font-size: 12px;
+  font-weight: 750;
+  color: #0f172a;
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 95px;
+  text-align: right;
+  flex: none;
+  padding: 2px 0;
+}
+
+.clean-del-part-btn {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: all 120ms ease;
+}
+
+.clean-del-part-btn:hover {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+.clean-q-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.clean-q-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.clean-or-line {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #2f80ff;
+  padding: 4px 0;
+  letter-spacing: 0.04em;
+}
+
+.clean-q-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 5px 4px;
+  border-bottom: 1px solid #f1f5f9;
+  border-radius: 6px;
+  transition: background 120ms ease;
+}
+
+.clean-q-row:hover,
+.clean-q-row:focus-within {
+  background: #f8fafc;
+}
+
+.clean-q-num-box {
+  display: flex;
+  align-items: baseline;
+  flex: none;
+  width: 26px;
+}
+
+.clean-q-num {
+  width: 20px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  text-align: right;
+  border: none;
+  background: transparent;
+  outline: none;
+  padding: 0;
+}
+
+.clean-q-num-dot {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-left: 1px;
+}
+
+.clean-q-text-wrap {
+  flex: 1;
+  min-width: 120px;
+}
+
+.clean-q-text {
+  width: 100%;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #0f172a;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  outline: none;
+  padding: 3px 5px;
+  margin: 0;
+  resize: vertical;
+  min-height: 42px;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: all 120ms ease;
+}
+
+.clean-q-text:focus {
+  border-color: #cbd5e1;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.clean-q-meta-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.clean-meta-item {
+  background: #f1f5f9;
+  border-radius: 4px;
+  padding: 2px 4px;
+  display: flex;
+  align-items: center;
+}
+
+.clean-meta-input {
+  width: 36px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  color: #475569;
+  border: none;
+  background: transparent;
+  outline: none;
+  padding: 0;
+}
+
+.clean-meta-input:focus {
+  color: #2f80ff;
+  font-weight: 800;
+}
+
+.clean-q-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  opacity: 0.45;
+  transition: opacity 120ms ease;
+}
+
+.clean-q-row:hover .clean-q-actions,
+.clean-q-row:focus-within .clean-q-actions {
+  opacity: 1;
+}
+
+.clean-action-chip {
+  padding: 2px 5px;
+  font-size: 10px;
+  font-weight: 750;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 120ms ease;
+}
+
+.clean-action-chip:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.clean-action-chip:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.clean-action-chip--active {
+  color: #ffffff;
+  background: #2f80ff;
+  border-color: #1f6fe5;
+}
+
+.clean-action-chip--del {
+  color: #ef4444;
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.clean-action-chip--del:hover {
+  background: #fee2e2;
+}
+
+.clean-inline-q-settings {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  padding: 1px 3px;
+  border-radius: 5px;
+}
+
+/* Sub-questions */
+.clean-subs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 32px;
+  margin-top: 2px;
+}
+
+.clean-sub-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 3px 4px;
+  border-bottom: 1px dashed #f1f5f9;
+  border-radius: 4px;
+}
+
+.clean-sub-row:hover,
+.clean-sub-row:focus-within {
+  background: #f8fafc;
+}
+
+.clean-sub-prefix {
+  font-size: 12.5px;
+  font-weight: 750;
+  color: #334155;
+  flex: none;
+}
+
+.clean-sub-text {
+  flex: 1;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #0f172a;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  outline: none;
+  padding: 2px 4px;
+  resize: vertical;
+  min-height: 34px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.clean-sub-text:focus {
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+.clean-sub-marks {
+  width: 36px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  color: #475569;
+  border: none;
+  background: #f1f5f9;
+  border-radius: 4px;
+  padding: 2px 4px;
+  outline: none;
+  flex: none;
+}
+
+.clean-add-q-line {
+  padding-top: 4px;
+}
+
+.clean-text-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  font-size: 11.5px;
+  font-weight: 750;
+  color: #2f80ff;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 120ms ease;
+}
+
+.clean-text-add-btn:hover {
+  background: #f5f3ff;
+  color: #3730a3;
+}
+
+.clean-add-part-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 750;
+  color: #2f80ff;
+  background: #f5f3ff;
+  border: 1px dashed #c7d2fe;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.clean-add-part-btn:hover {
+  background: #ede9fe;
+  border-color: #a5b4fc;
+}
+
+/* ── Clean Paper Switcher & Quick Actions ───────────────────── */
+.clean-paper-switcher-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.clean-paper-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 750;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.clean-paper-tab:hover {
+  color: #1e293b;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.clean-paper-tab--active {
+  color: #2f80ff;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.clean-paper-tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  font-size: 10px;
+  color: #94a3b8;
+  margin-left: 2px;
+}
+
+.clean-paper-tab-close:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.clean-table-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.clean-quick-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.clean-quick-btn--upload {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.clean-quick-btn--upload:hover {
+  background: #dbeafe;
+}
+
+.clean-quick-btn--paste {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.clean-quick-btn--paste:hover {
+  background: #d1fae5;
+}
+
+.clean-add-new-qp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1.5px dashed #6ee7b7;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 140ms ease;
+  box-shadow: 0 1px 2px rgba(5, 150, 105, 0.05);
+}
+
+.clean-add-new-qp-btn:hover {
+  background: #d1fae5;
+  border-color: #34d399;
+  transform: translateY(-1px);
+}
+
+/* ── Review Screen Settings Popover ─────────────────────────── */
+.flutter-review-settings-popover {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 70;
+  width: 320px;
+  max-width: calc(100% - 24px);
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.18), 0 4px 10px -2px rgba(0, 0, 0, 0.08);
+  animation: flutterPopoverFadeIn 140ms ease-out;
+}
+
+@keyframes flutterPopoverFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.flutter-review-settings-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.flutter-review-settings-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.flutter-review-settings-close {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.flutter-review-settings-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.flutter-review-settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flutter-review-settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.flutter-review-settings-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.flutter-review-settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.flutter-review-checkbox-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  background: #f8fafc;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.flutter-review-checkbox-item:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.flutter-review-checkbox-item input[type="checkbox"] {
+  margin-top: 2px;
+  cursor: pointer;
+  accent-color: #2f80ff;
+}
+
+.flutter-review-checkbox-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.flutter-review-checkbox-text strong {
+  font-size: 11.5px;
+  font-weight: 750;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.flutter-review-checkbox-text small {
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1.2;
+}
+
+/* ── Dynamic Floating Action Button (FAB) ─────────────────────── */
+.flutter-fab {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  border-radius: 9999px;
+  border: none;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.25), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.01em;
+}
+
+.flutter-fab:hover {
+  transform: translateY(-2px) scale(1.04);
+  filter: brightness(1.08);
+  box-shadow: 0 14px 28px -4px rgba(0, 0, 0, 0.3), 0 6px 8px -3px rgba(0, 0, 0, 0.18);
+}
+
+.flutter-fab:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.flutter-fab--review {
+  background: linear-gradient(135deg, #047857, #10b981);
+  color: #ffffff;
+}
+
+.flutter-fab--edit {
+  background: linear-gradient(135deg, #3730a3, #5b9dff);
+  color: #ffffff;
+}
+
+.flutter-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.flutter-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.flutter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.flutter-field__label {
+  font-size: 10.5px;
+  font-weight: 750;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flutter-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 12.5px;
+  color: #0f172a;
+  background: #f8fafc;
+  outline: none;
+  transition: all 140ms ease;
+}
+
+.flutter-input::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8 !important;
+  opacity: 0.28 !important;
+}
+
+.flutter-input:focus {
+  border-color: #2f80ff;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(47, 128, 255, 0.15);
+}
+
+.flutter-segmented {
+  display: flex;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  gap: 4px;
+}
+
+.flutter-seg-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.flutter-seg-btn--active {
+  background: #ffffff;
+  color: #2f80ff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+.flutter-summary-banner {
+  display: flex;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 750;
+  color: #15803d;
+  margin-top: 8px;
+}
+
+.flutter-stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.flutter-stat-card__val {
+  font-size: 20px;
+  font-weight: 850;
+  color: #0f172a;
+}
+
+.flutter-stat-card__label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* Mobile: Slide-Up Bottom Sheet & Fixed Bottom Nav Bar */
+@media (max-width: 900px) {
+  .topbar {
+    padding: 6px 12px;
+    height: 42px;
+    min-height: 42px;
+  }
+  .topbar__desktop-only {
+    display: none !important;
+  }
+  .topbar__back {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .flutter-ui {
+    height: calc(100dvh - 42px);
+    max-height: calc(100dvh - 42px);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .flutter-preview-pane {
+    padding-bottom: 56px;
+    overflow: hidden;
+    height: 100%;
+  }
+
+  .flutter-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 105;
+    backdrop-filter: blur(2px);
+  }
+
+  /* Fixed Bottom Nav Bar - Attached directly to screen bottom */
+  .flutter-tabs {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 54px !important;
+    padding: 2px 4px !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    margin: 0 !important;
+    z-index: 9999 !important;
+    background: #ffffff !important;
+    border-top: 1px solid #e2e8f0 !important;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06) !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+    box-sizing: border-box !important;
+  }
+
+  .flutter-tools-pane--open {
+    position: fixed;
+    bottom: 54px;
+    left: 0;
+    right: 0;
+    height: auto;
+    max-height: 82vh;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    box-shadow: 0 -12px 40px rgba(15, 23, 42, 0.28);
+    border-top: 1px solid #cbd5e1;
+    z-index: 110;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    animation: flutterSheetSlideUp 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .flutter-tools-pane--open .flutter-sheet-header {
+    display: flex;
+  }
+
+  .flutter-tools-pane--open .flutter-tab-content {
+    display: block;
+    flex: 1 1 auto;
+    max-height: calc(82vh - 54px);
+    overflow-y: auto;
+  }
+}
+
+@keyframes flutterSheetSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Desktop: Side-by-Side Dual Pane with Fixed Bottom Nav */
+@media (min-width: 901px) {
+  .flutter-ui {
+    display: flex;
+    flex-direction: row;
+    height: calc(100vh - 54px);
+    padding-bottom: 54px;
+    box-sizing: border-box;
+  }
+  .flutter-preview-pane {
+    flex: 0 0 54%;
+    height: 100%;
+    border-bottom: none;
+    border-right: 2px solid #cbd5e1;
+    padding-bottom: 0;
+  }
+  .flutter-tools-pane {
+    flex: 0 0 46%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    border-top: none;
+    box-shadow: none;
+  }
+  .flutter-tab-content {
+    display: block !important;
+    flex: 1;
+  }
+  .flutter-sheet-header {
+    display: none !important;
+  }
+}
+
+/* Flutter Export Item Checkbox List */
+.flutter-export-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 140ms ease;
+  user-select: none;
+}
+
+.flutter-export-item:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.flutter-export-item--active {
+  background: #eff6ff;
+  border-color: #5b9dff;
+}
+
+.flutter-export-title {
+  font-size: 13px;
+  font-weight: 750;
+  color: #0f172a;
+  display: block;
+}
+
+.flutter-export-meta {
+  font-size: 11px;
+  color: #64748b;
+  display: block;
+  margin-top: 2px;
+}
+
+
+
+/* ── Flutter layout: pieces the markup asks for that had no rules ─────────
+   Without these the paper tiles fell back to plain block flow — the number,
+   the title, the status line and the delete button each took their own row,
+   and the title ran straight into the status with no space between them. */
+
+.flutter-preview-bar__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Sits in a 170px slot, so the labels have to stay on one line. */
+.flutter-segmented--sm {
+  flex: none;
+}
+
+.flutter-segmented--sm .flutter-seg-btn {
+  padding: 5px 8px;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.flutter-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.flutter-item-tile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.flutter-item-tile--active {
+  border-color: #2f80ff;
+  background: #eaf2ff;
+}
+
+.flutter-item-tile__info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* Lets the title truncate instead of shoving the delete button off. */
+  min-width: 0;
+  flex: 1;
+}
+
+.flutter-item-tile__num {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.flutter-item-tile--active .flutter-item-tile__num {
+  background: #2f80ff;
+  color: #ffffff;
+}
+
+.flutter-item-tile__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.flutter-item-tile__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flutter-item-tile__meta {
+  font-size: 11.5px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flutter-item-tile__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+/* A part heading is label + instruction + formula. On a phone that is more
+   than one line's worth, so the instruction drops under the label rather than
+   being cut off mid-word — it is an <input>, which cannot show an ellipsis. */
+@media (max-width: 520px) {
+  .clean-part-header {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  .clean-part-instruction {
+    flex: 1 0 100%;
+    min-width: 0;
+    order: 3;
+  }
+
+  /* It separated the label from the instruction; with the instruction on its
+     own line there is nothing left for it to separate. */
+  .clean-header-dot {
+    display: none;
+  }
+}
+
+/* ── Icons ────────────────────────────────────────────────────────────────
+   Every glyph is now one stroke set drawing in currentColor, so an icon takes
+   the colour of the text it sits beside instead of each emoji bringing its own
+   palette. Section headings hold theirs a shade back from the words. */
+
+.flutter-card__title,
+.clean-settings-title,
+.flutter-tab-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.flutter-card__title > svg,
+.clean-settings-title > svg,
+.flutter-tab-title > svg {
+  flex: none;
+  color: #64748b;
+}
+
+/* Inline icons inside a run of text — buttons, tiles, empty states. */
+.flutter-btn > svg,
+.flutter-seg-btn > svg,
+.flutter-empty > svg,
+.flutter-summary-banner svg,
+.flutter-export-row svg {
+  flex: none;
+  vertical-align: -2px;
+}
+
+/* ── Polish: one accent, one shape language ───────────────────────────────
+   Peer actions were each carrying their own hue — upload blue beside paste
+   green, a grey gear beside a red bin — which read as four unrelated things
+   rather than one toolbar. Colour now marks intent (destructive on hover,
+   accent for the primary path); everything else is slate. */
+
+.clean-quick-btn--upload,
+.clean-quick-btn--paste {
+  background: #ffffff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 6px 11px;
+}
+
+.clean-quick-btn--upload:hover,
+.clean-quick-btn--paste:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+/* A bin is only alarming once you reach for it. */
+.clean-action-chip {
+  padding: 4px 7px;
+  border-radius: 7px;
+  color: #64748b;
+}
+
+.clean-action-chip--del {
+  color: #64748b;
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+.clean-action-chip:hover {
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.clean-action-chip--del:hover {
+  color: #dc2626;
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+/* It sat as heavy as the marks formula beside it; it is a quiet control. */
+.clean-del-part-btn {
+  color: #94a3b8;
+  font-size: 15px;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.clean-del-part-btn:hover {
+  color: #dc2626;
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+/* The browser's own resize grip was showing as a stray speck in the corner of
+   every question row. The row grows with its text, so the grip has no job. */
+.clean-q-text,
+.clean-sub-text,
+.clean-part-instruction {
+  resize: none;
+}
+
+/* ── Theme: light, roomy, one blue ────────────────────────────────────────
+   Modelled on the reference: an airy near-white ground, white cards with a
+   generous corner, tall rounded fields, and a single flat blue that only ever
+   marks the way forward. Nothing else carries colour. */
+
+/* Fields you actually want to type in — tall, rounded, and with a placeholder
+   you can read. The old one sat at 0.28 opacity, which is all but invisible. */
+.flutter-input,
+.clean-input,
+input[type='text'],
+input[type='number'],
+select,
+textarea {
+  border-radius: 12px;
+  border: 1px solid #e3e9f2;
+  background: #ffffff;
+}
+
+.flutter-input {
+  min-height: 44px;
+  padding: 11px 14px;
+  font-size: 13.5px;
+}
+
+.flutter-input--sm {
+  min-height: 36px;
+  padding: 8px 11px;
+}
+
+.flutter-input::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: #a3aec0 !important;
+  opacity: 1 !important;
+}
+
+.flutter-input:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #2f80ff;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(47, 128, 255, 0.14);
+}
+
+/* Flat, not gradient — the reference button is one solid blue. */
+.btn {
+  border-radius: 12px;
+  padding: 13px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: none;
+  border-color: #e3e9f2;
+}
+
+.btn--primary {
+  background: #2f80ff;
+  border-color: #2f80ff;
+  box-shadow: none;
+}
+
+.btn--primary:hover {
+  background: #1f6fe5;
+  border-color: #1f6fe5;
+}
+
+.btn--sm {
+  padding: 9px 13px;
+  font-size: 13px;
+  border-radius: 10px;
+}
+
+/* Cards: rounder, and resting on the page rather than floating over it. */
+.flutter-card {
+  border-radius: 16px;
+  border-color: #eaeef5;
+  box-shadow: none;
+  padding: 14px 16px;
+}
+
+.flutter-card__title {
+  font-size: 14px;
+}
+
+.flutter-card__sub {
+  font-size: 12px;
+  color: #7c8798;
+  line-height: 1.45;
+}
+
+/* The active tab wears a soft pill, the way the reference marks its section. */
+/* The bar sits in a 100dvh layout with nothing to scroll, so any height it
+   gains pushes its own labels off the bottom of the screen. The pill has to
+   fit inside the height the icons already took. */
+.flutter-tabs {
+  padding: 3px 6px max(3px, env(safe-area-inset-bottom));
+}
+
+.flutter-tab {
+  gap: 2px;
+  padding: 3px 2px;
+  border-radius: 12px;
+  background: none;
+}
+
+.flutter-tab--active {
+  color: #2f80ff;
+  background: none;
+}
+
+.flutter-tab > svg {
+  padding: 3px 13px;
+  border-radius: 999px;
+  box-sizing: content-box;
+  transition: background 160ms ease;
+}
+
+.flutter-tab--active > svg {
+  background: #eaf2ff;
+}
+
+/* Section heads: the question first and loud, the explanation quiet under it. */
+.flutter-sheet-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.flutter-item-tile {
+  border-radius: 12px;
+  border-color: #eaeef5;
+}
+
+.flutter-item-tile--active {
+  border-color: #2f80ff;
+  background: #eaf2ff;
+}
+
+.clean-quick-btn--upload,
+.clean-quick-btn--paste {
+  border-radius: 11px;
+  border-color: #e3e9f2;
+  padding: 9px 14px;
+  font-size: 12.5px;
+}
+
+.flutter-segmented {
+  border-radius: 12px;
+  border-color: #e3e9f2;
+  background: #eef2f7;
+}
+
+.flutter-seg-btn {
+  border-radius: 9px;
+}
+
+/* ── Question content: the three ways a paper gets in ─────────────────────
+   One row, one colour each, so the choice reads at a glance. */
+
+.qc-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.qc-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 12px 6px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: all 140ms ease;
+}
+
+.qc-action > svg {
+  flex: none;
+}
+
+.qc-action--upload {
+  background: #eaf2ff;
+  border-color: #cfe1ff;
+  color: #1f6fe5;
+}
+
+.qc-action--paste {
+  background: #eefbf3;
+  border-color: #c8ecd8;
+  color: #0f8a4d;
+}
+
+.qc-action--new {
+  background: #fdf1e7;
+  border-color: #f7ddc4;
+  color: #c2620b;
+}
+
+.qc-action:hover {
+  filter: brightness(0.97);
+}
+
+/* The paste area belongs under the buttons, not in a dialog — no title, no
+   backdrop, just the box and the two answers to it. */
+.qc-paste {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qc-paste textarea {
+  width: 100%;
+  min-height: 150px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #e3e9f2;
+  background: #ffffff;
+  color: #0f172a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.qc-paste__row {
+  display: flex;
+  gap: 8px;
+}
+
+.qc-paste__row > .btn {
+  flex: 1;
+}
+
+/* Floats over the sheet, clear of the tab bar. */
+.qc-fab {
+  position: absolute;
+  /* Left, where a thumb already rests. */
+  left: 16px;
+  bottom: 16px;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 999px;
+  background: #2f80ff;
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(47, 128, 255, 0.34);
+  transition: background 140ms ease, transform 140ms ease;
+}
+
+.qc-fab:hover {
+  background: #1f6fe5;
+}
+
+.qc-fab:active {
+  transform: scale(0.97);
+}
+
+/* ── Columns & numbering popover ──────────────────────────────────────────
+   No heading: the two group labels already say what everything is, and a
+   title bar on a panel this small is just another thing to read. */
+
+.clean-settings-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.clean-settings-close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.clean-settings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 18px 18px;
+}
+
+.clean-settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.clean-settings-group-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a94a6;
+}
+
+/* The chips read as one row of choices: off is quiet, on is the accent. */
+.clean-settings-group .clean-action-chip {
+  gap: 5px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border-color: #e3e9f2;
+  color: #64748b;
+}
+
+.clean-settings-group .clean-action-chip--active {
+  background: #eaf2ff;
+  border-color: #2f80ff;
+  color: #1f6fe5;
+}
+
+.clean-settings-group .flutter-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: #334155;
+  cursor: pointer;
+}
+
+.clean-settings-group .flutter-checkbox-label input {
+  width: 17px;
+  height: 17px;
+  accent-color: #2f80ff;
+}
+
+.qc-actions {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.qc-paste__hint {
+  font-size: 11.5px;
+  color: #c2620b;
+  line-height: 1.4;
+}
+
+/* The last thing on the tab, and clearly a different kind of act. */
+.qc-next {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1px dashed #b9c6da;
+  background: #ffffff;
+  color: #46536b;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.qc-next:hover {
+  border-color: #2f80ff;
+  color: #1f6fe5;
+  background: #f7faff;
+}
+
+/* The intake is the screen until a paper exists, so it gets room to breathe
+   rather than sitting in a dialog. */
+.qc-intake {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 20px 16px 28px;
+  align-self: center;
+}
+
+.qc-intake .qc-paste textarea {
+  min-height: 200px;
+}
+
+/* ── Paper chips ──────────────────────────────────────────────────────────
+   Each paper by its subject, so you pick by what it is rather than by a
+   number you have to remember. */
+
+.qc-papers {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  background: #ffffff;
+  border-bottom: 1px solid #eaeef5;
+  flex: none;
+}
+
+.qc-paper {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  max-width: 190px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid #e3e9f2;
+  background: #ffffff;
+  color: #55617a;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.qc-paper__n {
+  flex: none;
+  width: 19px;
+  height: 19px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.qc-paper__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qc-paper--active {
+  border-color: #2f80ff;
+  background: #eaf2ff;
+  color: #1f6fe5;
+}
+
+.qc-paper--active .qc-paper__n {
+  background: #2f80ff;
+  color: #ffffff;
+}
+
+.qc-paper--add {
+  padding: 8px;
+  color: #7c8798;
+}
+
+.qc-paper--add:hover {
+  border-color: #2f80ff;
+  color: #2f80ff;
+  background: #f7faff;
+}
+
+/* Destructive, so it only looks it when you reach for it. */
+.flutter-icon-btn--danger:hover {
+  color: #dc2626;
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.flutter-icon-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+/* An unnamed paper is just its number — no invented title. */
+.qc-paper--bare {
+  padding: 7px;
+  gap: 0;
+}
+
+.clean-quick-btn--delete {
+  background: #ffffff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  border-radius: 11px;
+  padding: 9px 14px;
+  font-size: 12.5px;
+}
+
+.clean-quick-btn--delete:hover {
+  color: #dc2626;
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.qc-paper:disabled,
+.qc-next:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.qc-sheet-toggle .flutter-seg-btn {
+  padding: 5px 11px;
+}
+
+/* Content that will not print has to be said out loud — the page that loses it
+   is the same page that cannot show the message. */
+.qc-cut-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 8px 12px 0;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid #f9e7cd;
+  background: #fefaf4;
+  /* Quiet enough to sit under the paper without shouting, dark enough to
+     still be read — it is the only place the lost content is mentioned. */
+  color: #b8792f;
+  opacity: 0.88;
+  font-size: 11.5px;
+  line-height: 1.45;
+  flex: none;
+}
+
+.qc-cut-warning > svg {
+  flex: none;
+  margin-top: 1px;
+  opacity: 0.75;
+}

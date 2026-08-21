@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App'
+import Shell from './Shell'
 import './styles/global.css'
 import './styles/sheet.css'
 
@@ -9,6 +9,6 @@ if (!container) throw new Error('#root is missing from index.html')
 
 createRoot(container).render(
   <StrictMode>
-    <App />
+    <Shell />
   </StrictMode>,
 )

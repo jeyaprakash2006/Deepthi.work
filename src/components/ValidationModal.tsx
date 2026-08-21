@@ -9,7 +9,7 @@ import { parseFormula, recomputeTotal } from '../lib/parser'
 import { uid } from './../lib/id'
 import { exportJson } from '../lib/export'
 import { PaperBody, sheetStyle } from './sheet/PaperBody'
-import { RedoIcon, UndoIcon } from './Icons'
+import { CheckIcon, PencilIcon, RedoIcon, TextIcon, UndoIcon } from './Icons'
 import { LayoutControls, TextControls } from './Sidebar'
 
 interface Props {
@@ -96,7 +96,6 @@ export function ValidationModal({
   const [stage, setStage] = useState<'edit' | 'review'>('edit')
   const proofRef = useRef<HTMLDivElement>(null)
   const [clipped, setClipped] = useState(false)
-  const [headingError, setHeadingError] = useState<string | null>(null)
 
   // Undo history. A snapshot carries both halves of what the popup edits — the
   // paper and the style — so stepping back restores the whole view, not half.
@@ -144,17 +143,6 @@ export function ValidationModal({
     record()
     onTokens(patch)
   }
-
-  // The heading is the branding every printed page carries, so an empty one is
-  // not something to discover after export.
-  const headingFields: [string, string][] = [
-    ['Institution', tokens.institution],
-    ['Department', tokens.department],
-    ['Exam title', tokens.examTitle],
-  ]
-  const missingHeading = headingFields.filter(([, value]) => !value.trim()).map(([label]) => label)
-  const headingIncomplete = missingHeading.length > 0
-  const blockReview = stage === 'edit' && headingIncomplete
 
   // A half sheet is short; whether this paper survives the cut is worth saying
   // out loud rather than leaving to be discovered in the PDF.
@@ -240,41 +228,68 @@ export function ValidationModal({
         if (e.target === e.currentTarget) onCancel()
       }}
     >
-      <div className="modal">
-        <header className="modal__head">
+      <div className={`modal ${stage === 'review' ? 'modal--proof' : ''}`}>
+        <header className="modal__head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
           <div>
-            <h2 className="modal__title">Review structured data — {title}</h2>
+            <h2 className="modal__title">
+              {stage === 'review' ? `A4 Proof & Tools — ${title}` : `Review structured data — ${title}`}
+            </h2>
             <p className="modal__sub">
               {totalQuestions} question{totalQuestions === 1 ? '' : 's'} ·{' '}
-              {draft.totalMarks} marks total. Edit anything the parser misread, then approve.
+              {draft.totalMarks} marks total · {stage === 'review' ? 'A4 Paper Preview on left, styling tools on right.' : 'Edit parsed questions and values, then approve.'}
             </p>
           </div>
-          <div className="modal__head-actions">
-            <button
-              type="button"
-              className="history-btn"
-              onClick={undo}
-              disabled={past.length === 0}
-              title={past.length ? `${past.length} step${past.length === 1 ? '' : 's'} back — ⌘Z` : 'Nothing to undo'}
-              aria-label="Undo"
-            >
-              <UndoIcon size={16} />
-              <span>Undo{past.length > 0 ? ` (${past.length})` : ''}</span>
-            </button>
-            <button
-              type="button"
-              className="history-btn"
-              onClick={redo}
-              disabled={future.length === 0}
-              title={future.length ? `${future.length} step${future.length === 1 ? '' : 's'} forward — ⇧⌘Z` : 'Nothing to redo'}
-              aria-label="Redo"
-            >
-              <RedoIcon size={16} />
-              <span>Redo{future.length > 0 ? ` (${future.length})` : ''}</span>
-            </button>
-            <button type="button" className="btn btn--auto btn--sm btn--ghost" onClick={onCancel}>
-              Close
-            </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'inline-flex', background: '#f1f5f9', padding: 3, borderRadius: 8, border: '1px solid #cbd5e1' }}>
+              <button
+                type="button"
+                className={`btn btn--sm ${stage === 'edit' ? 'btn--primary' : 'btn--ghost'}`}
+                style={{ padding: '4px 12px', fontSize: 12, borderRadius: 6, fontWeight: 700 }}
+                onClick={() => setStage('edit')}
+              >
+                <PencilIcon size={15} /> Edit Questions
+              </button>
+              <button
+                type="button"
+                className={`btn btn--sm ${stage === 'review' ? 'btn--primary' : 'btn--ghost'}`}
+                style={{ padding: '4px 12px', fontSize: 12, borderRadius: 6, fontWeight: 700 }}
+                onClick={() => {
+                  onApprove(draft)
+                  setStage('review')
+                }}
+              >
+                <TextIcon size={15} /> A4 Preview &amp; Tools
+              </button>
+            </div>
+
+            <div className="modal__head-actions">
+              <button
+                type="button"
+                className="history-btn"
+                onClick={undo}
+                disabled={past.length === 0}
+                title={past.length ? `${past.length} step${past.length === 1 ? '' : 's'} back — ⌘Z` : 'Nothing to undo'}
+                aria-label="Undo"
+              >
+                <UndoIcon size={16} />
+                <span>Undo{past.length > 0 ? ` (${past.length})` : ''}</span>
+              </button>
+              <button
+                type="button"
+                className="history-btn"
+                onClick={redo}
+                disabled={future.length === 0}
+                title={future.length ? `${future.length} step${future.length === 1 ? '' : 's'} forward — ⇧⌘Z` : 'Nothing to redo'}
+                aria-label="Redo"
+              >
+                <RedoIcon size={16} />
+                <span>Redo{future.length > 0 ? ` (${future.length})` : ''}</span>
+              </button>
+              <button type="button" className="btn btn--auto btn--sm btn--ghost" onClick={onCancel}>
+                ✕
+              </button>
+            </div>
           </div>
         </header>
 
@@ -309,10 +324,10 @@ export function ValidationModal({
                       <span className="sheet__cut-label">cut here</span>
                     </div>
                     <div className="sheet__half">
-                      {mirrorHalves ? (
+                      {mirrorHalves !== false ? (
                         <PaperBody paper={draft} tokens={tokens} />
                       ) : (
-                        <div className="sheet__half-empty">Second paper goes here</div>
+                        <div className="sheet__half-empty">Second paper goes here (Switch to A / A to duplicate top paper)</div>
                       )}
                     </div>
                   </div>
@@ -363,31 +378,23 @@ export function ValidationModal({
 
           <section>
             <div className="label">Heading</div>
-            {headingError && (
-              <p className="note note--error" style={{ marginBottom: 10 }}>
-                {headingError}
-              </p>
-            )}
             <div className="grid-3">
               <Field
                 label="Institution"
                 value={tokens.institution}
                 bold
-                invalid={Boolean(headingError) && !tokens.institution.trim()}
                 onChange={(v) => editTokens({ institution: v })}
               />
               <Field
                 label="Department"
                 value={tokens.department}
                 bold
-                invalid={Boolean(headingError) && !tokens.department.trim()}
                 onChange={(v) => editTokens({ department: v })}
               />
               <Field
                 label="Exam title"
                 value={tokens.examTitle}
                 bold
-                invalid={Boolean(headingError) && !tokens.examTitle.trim()}
                 onChange={(v) => editTokens({ examTitle: v })}
               />
             </div>
@@ -688,43 +695,47 @@ export function ValidationModal({
             Download JSON
           </button>
           <div style={{ display: 'flex', gap: 10 }}>
-            <button
-              type="button"
-              className="btn btn--auto"
-              onClick={() => (stage === 'review' ? setStage('edit') : onCancel())}
-            >
-              {stage === 'review' ? 'Back to editing' : 'Close'}
-            </button>
-            <button
-              type="button"
-              className={`btn btn--auto btn--primary${blockReview ? ' btn--blocked' : ''}`}
-              // Kept clickable while it looks disabled, so pressing it can say
-              // why rather than doing nothing at all.
-              aria-disabled={blockReview}
-              onClick={() => {
-                // On the proof there is nothing left to check — approve and go.
-                if (stage === 'review') {
-                  onApprove(draft)
-                  onCancel()
-                  return
-                }
-                // The heading fields are on this screen, so this is where the
-                // paper is stopped until they are filled.
-                if (blockReview) {
-                  setHeadingError(
-                    `Fill the heading first — ${missingHeading.join(', ')} ${
-                      missingHeading.length === 1 ? 'is' : 'are'
-                    } empty. Every printed page carries this.`,
-                  )
-                  document.querySelector('.modal__body')?.scrollTo({ top: 0, behavior: 'smooth' })
-                  return
-                }
-                setHeadingError(null)
-                setStage('review')
-              }}
-            >
-              {stage === 'review' ? 'Approve' : 'Review'}
-            </button>
+            {stage === 'review' ? (
+              <>
+                <button
+                  type="button"
+                  className="btn btn--auto"
+                  onClick={() => setStage('edit')}
+                >
+                  ← Edit Questions
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--auto btn--primary"
+                  onClick={() => {
+                    onApprove(draft)
+                    onCancel()
+                  }}
+                >
+                  <CheckIcon size={15} /> Done &amp; Save
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="btn btn--auto"
+                  onClick={onCancel}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--auto btn--primary"
+                  onClick={() => {
+                    onApprove(draft)
+                    setStage('review')
+                  }}
+                >
+                  Approve &amp; Preview A4 →
+                </button>
+              </>
+            )}
           </div>
         </footer>
       </div>

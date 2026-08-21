@@ -212,10 +212,34 @@ export async function extractDocx(file: File): Promise<string> {
  * ------------------------------------------------------------------ */
 
 /**
- * OCR an image. tesseract.js fetches its worker, WASM core and language data
- * from a CDN on first use, so this needs a network connection and takes a few
- * seconds. Everything else in this app works offline.
+ * Clean OCR noise (e.g. Roman numeral I misread as lowercase l or pipe,
+ * linternal -> I-INTERNAL, l-M.Sc -> I-M.Sc.).
  */
+export function cleanOcrText(raw: string): string {
+  if (!raw) return ''
+  return raw
+    // 1. OCR misreading Roman numeral prefixes on INTERNAL / TEST / ASSESSMENT
+    .replace(/\blllinternal\b/gi, 'III-INTERNAL')
+    .replace(/\bllinternal\b/gi, 'II-INTERNAL')
+    .replace(/\blinternal\b/gi, 'I-INTERNAL')
+    .replace(/\b1internal\b/gi, 'I-INTERNAL')
+    .replace(/\b\|internal\b/gi, 'I-INTERNAL')
+    // 2. Hyphenated / separated variations (l-internal, 1-internal, |-internal)
+    .replace(/\b(?:lll|111|[l1|]{3})\s*[-–—]\s*(internal|model|semester|mid|terminal|assessment|unit\s*test|test)\b/gi, 'III-$1')
+    .replace(/\b(?:ll|11|[l1|]{2})\s*[-–—]\s*(internal|model|semester|mid|terminal|assessment|unit\s*test|test)\b/gi, 'II-$1')
+    .replace(/\b(?:l|1|\|)\s*[-–—]\s*(internal|model|semester|mid|terminal|assessment|unit\s*test|test)\b/gi, 'I-$1')
+    // 3. Degree prefixes (l-M.Sc., 1-M.Sc., l-B.Sc., etc.)
+    .replace(/\b(?:l|1|\|)\s*[-–—]\s*(M\.?Sc\.?|B\.?Sc\.?|B\.?E\.?|B\.?Tech\.?|M\.?Tech\.?|M\.?E\.?|B\.?Com\.?|M\.?Com\.?|B\.?A\.?|M\.?A\.?|MCA|MBA|BBA|B\.?Ed\.?)\b/gi, 'I-$1')
+    .replace(/\b(?:ll|11|[l1|]{2})\s*[-–—]\s*(M\.?Sc\.?|B\.?Sc\.?|B\.?E\.?|B\.?Tech\.?|M\.?Tech\.?|M\.?E\.?|B\.?Com\.?|M\.?Com\.?|B\.?A\.?|M\.?A\.?|MCA|MBA|BBA|B\.?Ed\.?)\b/gi, 'II-$1')
+    .replace(/\b(?:lll|111|[l1|]{3})\s*[-–—]\s*(M\.?Sc\.?|B\.?Sc\.?|B\.?E\.?|B\.?Tech\.?|M\.?Tech\.?|M\.?E\.?|B\.?Com\.?|M\.?Com\.?|B\.?A\.?|M\.?A\.?|MCA|MBA|BBA|B\.?Ed\.?)\b/gi, 'III-$1')
+    // 4. Standalone lowercase l- prefix before exam words
+    .replace(/\bl-(internal|model|semester|exam|test)/gi, 'I-$1')
+    .replace(/\bll-(internal|model|semester|exam|test)/gi, 'II-$1')
+    .replace(/\blll-(internal|model|semester|exam|test)/gi, 'III-$1')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 export async function ocrImage(file: File, onProgress?: OnProgress): Promise<string> {
   const { createWorker } = await import('tesseract.js')
   const worker = await createWorker('eng', 1, {
@@ -225,7 +249,7 @@ export async function ocrImage(file: File, onProgress?: OnProgress): Promise<str
   })
   try {
     const { data } = await worker.recognize(file)
-    return (data.text ?? '').replace(/\n{3,}/g, '\n\n').trim()
+    return cleanOcrText(data.text ?? '')
   } finally {
     await worker.terminate()
   }

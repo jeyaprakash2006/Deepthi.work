@@ -146,6 +146,16 @@ export const SlidersIcon = (p: P) => (
   </Svg>
 )
 
+export const StyleIcon = (p: P) => (
+  <Svg {...p}>
+    <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+    <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+    <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+    <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.6 0-.4-.2-.8-.5-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.6 1.6-1.6H16c3.3 0 6-2.7 6-6 0-5.5-4.5-9.6-10-9.6Z" />
+  </Svg>
+)
+
 export const ChevronIcon = ({ open, ...p }: P & { open?: boolean }) => (
   <Svg {...p}>
     <path d={open ? 'm6 15 6-6 6 6' : 'm6 9 6 6 6-6'} />
@@ -245,3 +255,217 @@ export function RedoIcon(p: P) {
     </Svg>
   )
 }
+
+/* ------------------------------------------------------- tool icons --- */
+
+export function PaperToolIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <path d="M15 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6z" />
+      <path d="M15 2v4h4" />
+      <path d="M9 12h6" />
+      <path d="M9 16h4" />
+    </Svg>
+  )
+}
+
+export function FlaskIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <path d="M9 3h6" />
+      <path d="M10 3v6.5L4.6 18a2 2 0 0 0 1.7 3h11.4a2 2 0 0 0 1.7-3L14 9.5V3" />
+      <path d="M7.4 14h9.2" />
+    </Svg>
+  )
+}
+
+export function SigmaIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <path d="M17 4H7l6 8-6 8h10" />
+    </Svg>
+  )
+}
+
+export function ChartIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <path d="M3 3v18h18" />
+      <path d="M7 15v3" />
+      <path d="M12 9v9" />
+      <path d="M17 5v13" />
+    </Svg>
+  )
+}
+
+export function CalendarIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 10h18" />
+      <path d="M8 3v4" />
+      <path d="M16 3v4" />
+    </Svg>
+  )
+}
+
+export function StampIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <path d="M5 21h14" />
+      <path d="M6 17h12v-1.5a2 2 0 0 0-2-2h-1.6l.5-4.2A2.6 2.6 0 0 0 12.3 6h-.6A2.6 2.6 0 0 0 9.1 9.3l.5 4.2H8a2 2 0 0 0-2 2z" />
+    </Svg>
+  )
+}
+
+export function ArrowLeftIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <path d="M19 12H5" />
+      <path d="m12 19-7-7 7-7" />
+    </Svg>
+  )
+}
+
+export function RotateCcwIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+    </Svg>
+  )
+}
+
+export function MaximizeIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+    </Svg>
+  )
+}
+
+export function MinimizeIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+    </Svg>
+  )
+}
+
+export function ChevronLeftIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <path d="m15 18-6-6 6-6" />
+    </Svg>
+  )
+}
+
+export function ChevronRightIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <path d="m9 18 6-6-6-6" />
+    </Svg>
+  )
+}
+
+export function SearchIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </Svg>
+  )
+}
+
+export function SettingsIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </Svg>
+  )
+}
+
+/* ── Icons that replaced emoji, so every glyph in the UI is one stroke set ── */
+
+export const XIcon = (p: P) => (
+  <Svg {...p}>
+    <path d="M18 6 6 18" />
+    <path d="m6 6 12 12" />
+  </Svg>
+)
+
+export const CheckIcon = (p: P) => (
+  <Svg {...p}>
+    <path d="M20 6 9 17l-5-5" />
+  </Svg>
+)
+
+export const AlertIcon = (p: P) => (
+  <Svg {...p}>
+    <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+    <path d="M12 9v4" />
+    <path d="M12 17h.01" />
+  </Svg>
+)
+
+export const PrinterIcon = (p: P) => (
+  <Svg {...p}>
+    <path d="M6 9V2h12v7" />
+    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+    <path d="M6 14h12v8H6z" />
+  </Svg>
+)
+
+export const BankIcon = (p: P) => (
+  <Svg {...p}>
+    <path d="m3 9 9-6 9 6" />
+    <path d="M4 10v9" />
+    <path d="M9 10v9" />
+    <path d="M15 10v9" />
+    <path d="M20 10v9" />
+    <path d="M2 21h20" />
+  </Svg>
+)
+
+export const FolderIcon = (p: P) => (
+  <Svg {...p}>
+    <path d="M4 20a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2Z" />
+  </Svg>
+)
+
+export const ScissorsIcon = (p: P) => (
+  <Svg {...p}>
+    <circle cx="6" cy="6" r="3" />
+    <circle cx="6" cy="18" r="3" />
+    <path d="M20 4 8.12 15.88" />
+    <path d="M14.47 14.48 20 20" />
+    <path d="M8.12 8.12 12 12" />
+  </Svg>
+)
+
+export const GridIcon = (p: P) => (
+  <Svg {...p}>
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <path d="M3 9h18" />
+    <path d="M3 15h18" />
+    <path d="M9 3v18" />
+  </Svg>
+)
+
+export const PackageIcon = (p: P) => (
+  <Svg {...p}>
+    <path d="m7.5 4.27 9 5.15" />
+    <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+    <path d="m3.3 7 8.7 5 8.7-5" />
+    <path d="M12 22V12" />
+  </Svg>
+)
+
+export const FlaskSmallIcon = (p: P) => (
+  <Svg {...p}>
+    <path d="M10 2v7.5L4.6 18A2 2 0 0 0 6.3 21h11.4a2 2 0 0 0 1.7-3L14 9.5V2" />
+    <path d="M8.5 2h7" />
+    <path d="M7 15h10" />
+  </Svg>
+)

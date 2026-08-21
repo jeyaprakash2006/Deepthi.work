@@ -14,15 +14,19 @@ import { parseRawText } from './lib/parser'
 import { DEFAULT_TOKENS, extractStyleTokens } from './lib/styleTokens'
 import { paperToText } from './lib/serialize'
 import { buildSheets, unreviewed } from './lib/sheets'
+import { clearWorkspace, hasContent, loadWorkspace, saveWorkspace } from './lib/persist'
 import { exportImage, exportPdf, exportSeparatePdfs, exportText, A4_HEIGHT_PX, A4_WIDTH_PX } from './lib/export'
 import { uid } from './lib/id'
 import { SAMPLE_ITEM_FLAT, SAMPLE_ITEM_STRUCTURED, SAMPLE_MASTER } from './lib/sample'
+import { FlutterLayout } from './components/FlutterLayout'
 import { ItemCard } from './components/ItemCard'
 import { Sidebar } from './components/Sidebar'
 import { ValidationModal } from './components/ValidationModal'
 import { SheetPage } from './components/sheet/SheetPage'
 import { Segmented } from './components/Segmented'
-import { AppMark, EyeIcon, PlusIcon, SlidersIcon } from './components/Icons'
+import { AppMark, EyeIcon, PlusIcon, SlidersIcon,
+  ArrowLeftIcon,
+} from './components/Icons'
 
 /** Titles the user has not renamed, so they can be safely renumbered. */
 const DEFAULT_TITLE_RE = /^Item \s*\d+$/
@@ -50,21 +54,26 @@ function newItem(index: number): Item {
   }
 }
 
-export default function App() {
-  const [master, setMaster] = useState<MasterStyle>({
-    captured: false,
-    tokens: { ...DEFAULT_TOKENS },
-  })
-  const [items, setItems] = useState<Item[]>(() => [newItem(1), newItem(2)])
-  const [activeItemId, setActiveItemId] = useState<string | null>(null)
-  const [layout, setLayout] = useState<SheetLayout>('single')
+export function Formatter({ onExit }: { onExit: () => void }) {
+  // Picked up once, before any state is created, so a reload lands the user
+  // exactly where they left off.
+  const restored = useRef(loadWorkspace()).current
+
+  const [master, setMaster] = useState<MasterStyle>(
+    restored?.master ?? { captured: false, tokens: { ...DEFAULT_TOKENS } },
+  )
+  const [items, setItems] = useState<Item[]>(() => restored?.items ?? [newItem(1)])
+  const [activeItemId, setActiveItemId] = useState<string | null>(restored?.activeItemId ?? null)
+  const [layout, setLayout] = useState<SheetLayout>(restored?.layout ?? 'single')
   // A/A: the same paper on both halves of one sheet — not a second item.
-  const [mirrorHalves, setMirrorHalves] = useState(false)
-  const [format, setFormat] = useState<DownloadFormat>('pdf')
+  const [mirrorHalves, setMirrorHalves] = useState(restored?.mirrorHalves ?? false)
+  const [format, setFormat] = useState<DownloadFormat>(restored?.format ?? 'pdf')
   const [view, setView] = useState<View>('editor')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [toast, setToast] = useState<{ text: string; error?: boolean } | null>(null)
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
+  const [uiMode, setUiMode] = useState<'flutter' | 'classic'>('flutter')
 
   const stageRef = useRef<HTMLDivElement>(null)
 
@@ -179,12 +188,105 @@ export default function App() {
     [patchItem, setObjectUrl],
   )
 
-  const addItem = () => setItems((prev) => renumberItems([...prev, newItem(prev.length + 1)]))
+  const addItem = () => {
+    const created = newItem(items.length + 1)
+    setItems((prev) => renumberItems([...prev, created]))
+    setActiveItemId(created.id)
+  }
 
   const removeItem = (id: string) => {
     setObjectUrl(id, undefined)
-    setItems((prev) => renumberItems(prev.filter((i) => i.id !== id)))
+    setItems((prev) => {
+      const remaining = renumberItems(prev.filter((i) => i.id !== id))
+      if (activeItemId === id) {
+        setActiveItemId(remaining[0]?.id ?? null)
+      }
+      return remaining
+    })
   }
+
+  /* --------------------------------------------------------- history -- */
+
+  /**
+   * Undo covers the whole workspace, because the things a teacher wants back
+   * cut across it: a deleted paper, a heading typed over, a column switched
+   * off. Snapshots are taken 500ms after a change settles, so a sentence typed
+   * into a question is one step to undo rather than forty.
+   */
+  type Snapshot = {
+    master: MasterStyle
+    items: Item[]
+    layout: SheetLayout
+    mirrorHalves: boolean
+    activeItemId: string | null
+  }
+
+  const HISTORY_LIMIT = 20
+  const past = useRef<Snapshot[]>([])
+  const future = useRef<Snapshot[]>([])
+  const settled = useRef<Snapshot | null>(null)
+  const replaying = useRef(false)
+  const [historyTick, setHistoryTick] = useState(0)
+
+  useEffect(() => {
+    const current: Snapshot = { master, items, layout, mirrorHalves, activeItemId }
+    if (replaying.current) {
+      replaying.current = false
+      settled.current = current
+      return
+    }
+    const timer = setTimeout(() => {
+      const previous = settled.current
+      settled.current = current
+      if (!previous) return
+      past.current = [...past.current, previous].slice(-HISTORY_LIMIT)
+      future.current = []
+      setHistoryTick((t) => t + 1)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [master, items, layout, mirrorHalves, activeItemId])
+
+  const applySnapshot = useCallback((snap: Snapshot) => {
+    replaying.current = true
+    setMaster(snap.master)
+    setItems(snap.items)
+    setLayout(snap.layout)
+    setMirrorHalves(snap.mirrorHalves)
+    setActiveItemId(snap.activeItemId)
+  }, [])
+
+  const handleUndo = useCallback(() => {
+    const previous = past.current[past.current.length - 1]
+    if (!previous || !settled.current) return
+    past.current = past.current.slice(0, -1)
+    future.current = [settled.current, ...future.current].slice(0, HISTORY_LIMIT)
+    applySnapshot(previous)
+    setHistoryTick((t) => t + 1)
+  }, [applySnapshot])
+
+  const handleRedo = useCallback(() => {
+    const next = future.current[0]
+    if (!next || !settled.current) return
+    future.current = future.current.slice(1)
+    past.current = [...past.current, settled.current].slice(-HISTORY_LIMIT)
+    applySnapshot(next)
+    setHistoryTick((t) => t + 1)
+  }, [applySnapshot])
+
+  // Read during render so the buttons enable and disable with the stacks.
+  void historyTick
+  const canUndo = past.current.length > 0
+  const canRedo = future.current.length > 0
+
+  const handleReset = useCallback(() => {
+    clearWorkspace()
+    setMaster({ captured: false, tokens: { ...DEFAULT_TOKENS } })
+    setItems([newItem(1)])
+    setActiveItemId(null)
+    setLayout('single')
+    setMirrorHalves(false)
+    say('Workspace reset to defaults.')
+  }, [say])
 
   /* ---------------------------------------------------------- master -- */
 
@@ -270,6 +372,18 @@ export default function App() {
     [activeItemId, master.tokens],
   )
 
+  /**
+   * The Master tab is the shared identity of every paper — the institution,
+   * the department, the exam title. A change there belongs to all of them, and
+   * to papers that already carry their own token overrides.
+   */
+  const patchAllTokens = useCallback((patch: Partial<StyleTokens>) => {
+    setMaster((prev) => ({ ...prev, tokens: { ...prev.tokens, ...patch } }))
+    setItems((prev) =>
+      prev.map((it) => (it.tokens ? { ...it, tokens: { ...it.tokens, ...patch } } : it)),
+    )
+  }, [])
+
   /* ----------------------------------------------------------- demo --- */
 
   const loadSample = () => {
@@ -305,7 +419,39 @@ export default function App() {
 
   /* --------------------------------------------------------- export --- */
 
-  const sheets = useMemo(() => buildSheets(items, layout, mirrorHalves), [items, layout, mirrorHalves])
+  useEffect(() => {
+    if (restored && hasContent(restored)) say('Picked up where you left off.')
+    // Runs once, on the mount that restored the workspace.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // A split sheet carries the same paper twice. Two different papers on one
+  // sheet (A / B) is not offered yet, so the flag is not read from state.
+  const sheets = useMemo(() => buildSheets(items, layout, true), [items, layout])
+
+  // Persist the workspace so a reload, or a trip to another page and back,
+  // does not cost the user their work.
+  useEffect(() => {
+    const workspace = { master, items, layout, format, mirrorHalves, activeItemId }
+    if (!hasContent(workspace)) return
+    const timer = setTimeout(() => saveWorkspace(workspace), 400)
+    return () => clearTimeout(timer)
+  }, [master, items, layout, format, mirrorHalves, activeItemId])
+
+  // A tab closed mid-keystroke would otherwise lose the last 400ms of typing.
+  useEffect(() => {
+    const flush = () => {
+      const workspace = { master, items, layout, format, mirrorHalves, activeItemId }
+      if (hasContent(workspace)) saveWorkspace(workspace)
+    }
+    window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', flush)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      document.removeEventListener('visibilitychange', flush)
+    }
+  }, [master, items, layout, format, mirrorHalves, activeItemId])
+
 
   // Start each page back at full size whenever the content or the style changes.
   useLayoutEffect(() => {
@@ -425,6 +571,42 @@ export default function App() {
     }
   }
 
+  const handleDownloadSelected = async (selectedItemIds: string[]) => {
+    const ready = items.filter((i) => i.paper && selectedItemIds.includes(i.id))
+    if (ready.length === 0) {
+      say('No question papers selected.', true)
+      return
+    }
+
+    setBusy('Preparing…')
+    try {
+      const stage = stageRef.current
+      if (!stage) throw new Error('The export stage is not ready.')
+      const onProgress = (done: number, total: number) => setBusy(`PDF ${done} of ${total}…`)
+
+      const docs: { name: string; pageIndices: number[] }[] = []
+      ready.forEach((item, itemIdx) => {
+        const pageIndices: number[] = []
+        sheets.forEach((s, pIdx) => {
+          if (s.kind === 'single' && s.item.id === item.id) pageIndices.push(pIdx)
+          else if (s.kind === 'split' && (s.top.id === item.id || s.bottom?.id === item.id)) pageIndices.push(pIdx)
+        })
+        const subName = item.paper?.header.courseTitle || item.tokens?.courseTitle || master.tokens.courseTitle || item.title || `Paper-${itemIdx + 1}`
+        docs.push({
+          name: subName,
+          pageIndices: pageIndices.length > 0 ? pageIndices : [0],
+        })
+      })
+
+      await exportSeparatePdfs(stage, docs, { scale: 2, onProgress })
+      say(ready.length === 1 ? 'PDF downloaded successfully.' : 'ZIP of PDFs downloaded successfully.')
+    } catch (err) {
+      say(err instanceof Error ? err.message : 'Export failed.', true)
+    } finally {
+      setBusy(null)
+    }
+  }
+
   const handleCopyTopToBottom = useCallback(
     (sheetTopId?: string) => {
       setItems((current) => {
@@ -463,104 +645,177 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <span className="topbar__mark">
+        <span className="topbar__mark topbar__desktop-only">
           <AppMark size={19} />
         </span>
-        <div>
-          <div className="topbar__title">Question Paper Formatter</div>
-          <div className="topbar__sub">Clone a paper’s style, pour any input into it, print A4</div>
+        <button type="button" className="topbar__back" onClick={onExit}>
+          <ArrowLeftIcon size={15} />
+          Tools
+        </button>
+        <div className="topbar__title topbar__desktop-only">Question Paper Formatter</div>
+        <span className="topbar__spacer topbar__desktop-only" />
+
+        <div className="topbar__desktop-only" style={{ width: 190 }}>
+          <Segmented
+            ariaLabel="UI View Mode"
+            size="sm"
+            value={uiMode}
+            onChange={(v) => setUiMode(v as 'flutter' | 'classic')}
+            options={[
+              { value: 'flutter', label: 'Flutter UI', icon: <EyeIcon size={14} /> },
+              { value: 'classic', label: 'Classic Grid', icon: <SlidersIcon size={14} /> },
+            ]}
+          />
         </div>
       </header>
 
-      <div className="layout">
-        <Sidebar
+      {uiMode === 'flutter' ? (
+        <FlutterLayout
           master={master}
+          tokens={master.tokens}
           items={items}
           activeItemId={activeItemId}
           layout={layout}
-          format={format}
-          pageCount={sheets.length}
-          pendingReview={pendingReview}
-          busy={busy}
-          onMasterFile={handleMasterFile}
-          onTokens={patchTokens}
-          onSelectActiveItem={setActiveItemId}
-          onLayout={setLayout}
           mirrorHalves={mirrorHalves}
+          sheets={sheets}
+          fits={fits}
+          busy={busy}
+          onTokens={patchTokens}
+          onTokensAll={patchAllTokens}
+          onLayout={setLayout}
           onMirrorHalves={setMirrorHalves}
-          onFormat={setFormat}
+          onSelectActiveItem={setActiveItemId}
+          onOpenValidator={(itemId) => setEditingId(itemId)}
+          onUploadFile={(itemId, file) => void handleItemFile(itemId, file)}
+          onUploadMaster={(file) => void handleMasterFile(file)}
           onDownload={handleDownload}
+          onDownloadSelected={handleDownloadSelected}
+          onLoadSample={loadSample}
+          onAddItem={addItem}
+          onDeleteItem={removeItem}
+          onReset={handleReset}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onSavePaper={(itemId, paper, rawText) =>
+            patchItem(itemId, { paper, rawText: rawText ?? '', status: 'approved', error: undefined })
+          }
         />
-
-        <main className="main">
-          <div className="main__head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
-            <div>
-              <h1 className="main__title">Question Paper Formatter</h1>
-              <p className="main__desc">
-                Convert raw inputs into styled academic papers.{' '}
-                <button
-                  type="button"
-                  className="btn btn--sm btn--auto btn--ghost"
-                  style={{ marginLeft: 6, color: 'var(--primary)', fontWeight: 700 }}
-                  onClick={loadSample}
-                >
-                  ⚡ Load sample
-                </button>
-              </p>
-            </div>
-
-            <div style={{ width: 220 }}>
-              <Segmented
-                ariaLabel="View mode"
-                size="sm"
-                value={view}
-                onChange={setView}
-                options={[
-                  { value: 'editor', label: 'Editor', icon: <SlidersIcon size={15} /> },
-                  { value: 'preview', label: 'Preview', icon: <EyeIcon size={15} /> },
-                ]}
-              />
-            </div>
-          </div>
-
-          {view === 'editor' ? (
-            <div className="items">
-              {items.map((item, i) => (
-                <ItemCard
-                  key={item.id}
-                  item={item}
-                  index={i}
-                  canRemove={items.length > 1}
-                  onPatch={(patch) => patchItem(item.id, patch)}
-                  onFile={(file) => void handleItemFile(item.id, file)}
-                  onParse={() => parseItem(item.id)}
-                  onEdit={() => setEditingId(item.id)}
-                  onRemove={() => removeItem(item.id)}
-                />
-              ))}
-
-              <button type="button" className="item-add" onClick={addItem}>
-                <PlusIcon size={22} />
-                Add another question paper
-              </button>
-            </div>
-          ) : (
-            <PreviewPane
-              items={items}
-              activeItemId={activeItemId}
-              onSelectActiveItem={setActiveItemId}
-              sheets={sheets}
-              tokens={master.tokens}
-              layout={layout}
-              fits={fits}
-              onLayout={setLayout}
-              onTokens={patchTokens}
-              onEditPaper={(itemId, paper) => patchItem(itemId, { paper, status: 'approved' })}
-              onCopyTopToBottom={handleCopyTopToBottom}
+      ) : (
+        <div className="layout">
+          {mobileDrawerOpen && (
+            <div
+              className="drawer-backdrop"
+              onClick={() => setMobileDrawerOpen(false)}
+              aria-hidden="true"
             />
           )}
-        </main>
-      </div>
+
+          <div className={`sidebar-container ${mobileDrawerOpen ? 'sidebar-container--open' : ''}`}>
+            <div className="drawer-header">
+              <span className="drawer-title">🎨 Master Style &amp; Settings</span>
+              <button
+                type="button"
+                className="icon-btn drawer-close"
+                onClick={() => setMobileDrawerOpen(false)}
+                aria-label="Close style drawer"
+              >
+                ✕
+              </button>
+            </div>
+            <Sidebar
+              master={master}
+              items={items}
+              activeItemId={activeItemId}
+              layout={layout}
+              format={format}
+              pageCount={sheets.length}
+              pendingReview={pendingReview}
+              busy={busy}
+              onMasterFile={handleMasterFile}
+              onTokens={patchTokens}
+              onSelectActiveItem={setActiveItemId}
+              onLayout={setLayout}
+              mirrorHalves={mirrorHalves}
+              onMirrorHalves={setMirrorHalves}
+              onFormat={setFormat}
+              onDownload={handleDownload}
+            />
+          </div>
+
+          <main className="main">
+            <div className="main__head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
+              <div>
+                <h1 className="main__title">Question Paper Formatter</h1>
+                <p className="main__desc">
+                  Convert raw inputs into styled academic papers.{' '}
+                  <button
+                    type="button"
+                    className="btn btn--sm btn--auto btn--ghost"
+                    style={{ marginLeft: 6, color: 'var(--primary)', fontWeight: 700 }}
+                    onClick={loadSample}
+                  >
+                    ⚡ Load sample
+                  </button>
+                </p>
+              </div>
+
+              <div style={{ width: 220 }}>
+                <Segmented
+                  ariaLabel="View mode"
+                  size="sm"
+                  value={view}
+                  onChange={setView}
+                  options={[
+                    { value: 'editor', label: 'Editor', icon: <SlidersIcon size={15} /> },
+                    { value: 'preview', label: 'Preview', icon: <EyeIcon size={15} /> },
+                  ]}
+                />
+              </div>
+            </div>
+
+            {view === 'editor' ? (
+              <div className="items">
+                {items.map((item, i) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    index={i}
+                    canRemove={items.length > 1}
+                    onPatch={(patch) => patchItem(item.id, patch)}
+                    onFile={(file) => void handleItemFile(item.id, file)}
+                    onParse={() => parseItem(item.id)}
+                    onEdit={() => setEditingId(item.id)}
+                    onRemove={() => removeItem(item.id)}
+                  />
+                ))}
+
+                <button type="button" className="item-add" onClick={addItem}>
+                  <PlusIcon size={22} />
+                  Add another question paper
+                </button>
+              </div>
+            ) : (
+              <PreviewPane
+                items={items}
+                activeItemId={activeItemId}
+                onSelectActiveItem={setActiveItemId}
+                sheets={sheets}
+                tokens={master.tokens}
+                layout={layout}
+                mirrorHalves={mirrorHalves}
+                fits={fits}
+                onLayout={setLayout}
+                onMirrorHalves={setMirrorHalves}
+                onTokens={patchTokens}
+                onEditPaper={(itemId, paper) => patchItem(itemId, { paper, status: 'approved' })}
+                onCopyTopToBottom={handleCopyTopToBottom}
+              />
+            )}
+          </main>
+        </div>
+      )}
 
       {/* Full-size pages used by the PDF/image exporter, and by auto-fit to
           measure real overflow. Kept off-view but always mounted. */}
@@ -615,8 +870,10 @@ function PreviewPane({
   sheets,
   tokens,
   layout,
+  mirrorHalves,
   fits,
   onLayout,
+  onMirrorHalves,
   onTokens,
   onEditPaper,
   onCopyTopToBottom,
@@ -627,8 +884,10 @@ function PreviewPane({
   sheets: ReturnType<typeof buildSheets>
   tokens: StyleTokens
   layout: SheetLayout
+  mirrorHalves?: boolean
   fits: Record<number, number>
   onLayout: (layout: SheetLayout) => void
+  onMirrorHalves?: (on: boolean) => void
   onTokens: (patch: Partial<StyleTokens>, itemId?: string | null) => void
   onEditPaper: (itemId: string, paper: ParsedPaper) => void
   onCopyTopToBottom?: (sheetTopId?: string) => void
@@ -673,7 +932,16 @@ function PreviewPane({
     if (!box) return
     const GAP = 20
     const fit = () => {
-      const width = box.clientWidth - 8
+      // Measure the strip the pages actually sit in. The outer box includes the
+      // preview's own padding, and scaling against that overflows it by exactly
+      // that much on a narrow screen.
+      const inner = box.querySelector('.preview') as HTMLElement | null
+      const available = inner
+        ? inner.clientWidth -
+          parseFloat(getComputedStyle(inner).paddingLeft) -
+          parseFloat(getComputedStyle(inner).paddingRight)
+        : box.clientWidth
+      const width = available - 8
       // Two up unless a page would end up under 55% — below that the preview is
       // too small to read, so one per row is the better trade.
       const twoUp = (width - GAP) / 2 / A4_WIDTH_PX
@@ -810,11 +1078,36 @@ function PreviewPane({
               <button
                 type="button"
                 className={`chip${layout === 'split' ? ' chip--on' : ''}`}
-                onClick={() => onLayout('split')}
+                onClick={() => {
+                  onLayout('split')
+                  onMirrorHalves?.(true)
+                }}
               >
                 A4 / 2
               </button>
             </div>
+
+            {layout === 'split' && onMirrorHalves && (
+              <div className="preview__sizer">
+                <span className="preview__sizer-label">Halves</span>
+                <button
+                  type="button"
+                  className={`chip${mirrorHalves !== false ? ' chip--on' : ''}`}
+                  onClick={() => onMirrorHalves(true)}
+                  title="One paper printed on both halves of its own sheet"
+                >
+                  A / A
+                </button>
+                <button
+                  type="button"
+                  className={`chip${mirrorHalves === false ? ' chip--on' : ''}`}
+                  onClick={() => onMirrorHalves(false)}
+                  title="Two different papers, one on each half"
+                >
+                  A / B
+                </button>
+              </div>
+            )}
 
             <div className="preview__sizer">
               <span className="preview__sizer-label">Auto-fit</span>

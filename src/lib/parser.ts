@@ -212,10 +212,109 @@ function looksLikeNewItem(line: string): boolean {
 const HEADER_HINT_RE =
   /(university|college|institute|academy|department\s+of|examination|semester|time\s*[:\-]|duration\s*[:\-]|max(?:imum)?\.?\s*marks|reg(?:ister)?\.?\s*no|roll\s*no|course\s*(?:code|title)|^answer\s|^[A-Z]{2,4}\s?\d{3,5}[A-Z]?\b)/i
 
+export function formatDegreeTitle(yearStr: string, degStr: string): string {
+  let roman = yearStr.trim().toUpperCase()
+  if (roman === '1' || roman === '1ST') roman = 'I'
+  else if (roman === '2' || roman === '2ND') roman = 'II'
+  else if (roman === '3' || roman === '3RD') roman = 'III'
+  else if (roman === '4' || roman === '4TH') roman = 'IV'
+
+  let deg = degStr.trim()
+  const lower = deg.toLowerCase().replace(/[^a-z]/g, '')
+  if (lower === 'msc') deg = 'M.Sc.'
+  else if (lower === 'bsc') deg = 'B.Sc.'
+  else if (lower === 'bcom') deg = 'B.Com.'
+  else if (lower === 'mcom') deg = 'M.Com.'
+  else if (lower === 'ba') deg = 'B.A.'
+  else if (lower === 'ma') deg = 'M.A.'
+  else if (lower === 'be') deg = 'B.E.'
+  else if (lower === 'btech') deg = 'B.Tech.'
+  else if (lower === 'mtech') deg = 'M.Tech.'
+  else if (lower === 'me') deg = 'M.E.'
+  else if (lower === 'mca') deg = 'MCA'
+  else if (lower === 'bca') deg = 'BCA'
+  else if (lower === 'mba') deg = 'MBA'
+  else if (lower === 'bba') deg = 'BBA'
+  else if (lower === 'bed') deg = 'B.Ed.'
+
+  return `${roman} ${deg}`
+}
+
+export function cleanExamTitle(s: string): string {
+  if (!s) return ''
+  return s
+    .replace(/\blllinternal\b/gi, 'III-INTERNAL')
+    .replace(/\bllinternal\b/gi, 'II-INTERNAL')
+    .replace(/\blinternal\b/gi, 'I-INTERNAL')
+    .replace(/\b1internal\b/gi, 'I-INTERNAL')
+    .replace(/\b\|internal\b/gi, 'I-INTERNAL')
+    .replace(/\b(?:lll|111|[l1|]{3})\s*[-–—/.\s]?(internal|model|semester|mid|terminal|assessment|unit\s*test|test)\b/gi, (_, w) => `III-${w.toUpperCase()}`)
+    .replace(/\b(?:ll|11|[l1|]{2})\s*[-–—/.\s]?(internal|model|semester|mid|terminal|assessment|unit\s*test|test)\b/gi, (_, w) => `II-${w.toUpperCase()}`)
+    .replace(/\b(?:l|1|\||1st)\s*[-–—/.\s]?(internal|model|semester|mid|terminal|assessment|unit\s*test|test)\b/gi, (_, w) => `I-${w.toUpperCase()}`)
+    .replace(/\b(?:l|1|\|)\s*[-–—]\s*(M\.?Sc\.?|B\.?Sc\.?|B\.?E\.?|B\.?Tech\.?|M\.?Tech\.?|M\.?E\.?|B\.?Com\.?|M\.?Com\.?|B\.?A\.?|M\.?A\.?|MCA|MBA|BBA|B\.?Ed\.?)\b/gi, 'I-$1')
+    .replace(/\b(?:ll|11|[l1|]{2})\s*[-–—]\s*(M\.?Sc\.?|B\.?Sc\.?|B\.?E\.?|B\.?Tech\.?|M\.?Tech\.?|M\.?E\.?|B\.?Com\.?|M\.?Com\.?|B\.?A\.?|M\.?A\.?|MCA|MBA|BBA|B\.?Ed\.?)\b/gi, 'II-$1')
+    .replace(/\b(?:lll|111|[l1|]{3})\s*[-–—]\s*(M\.?Sc\.?|B\.?Sc\.?|B\.?E\.?|B\.?Tech\.?|M\.?Tech\.?|M\.?E\.?|B\.?Com\.?|M\.?Com\.?|B\.?A\.?|M\.?A\.?|MCA|MBA|BBA|B\.?Ed\.?)\b/gi, 'III-$1')
+    .replace(/\bl-(internal|model|semester|exam|test)/gi, 'I-$1')
+    .replace(/\bll-(internal|model|semester|exam|test)/gi, 'II-$1')
+    .replace(/\blll-(internal|model|semester|exam|test)/gi, 'III-$1')
+    .trim()
+}
+
+export function splitExamTitleAndClass(rawLine: string): {
+  examTitle: string
+  classInfo?: string
+  semester?: string
+} {
+  const cleaned = cleanExamTitle(rawLine)
+  // Match lines like "I-INTERNAL TEST - I-M.Sc., Chemistry" or "1-internal exam - 1 msc chemistry"
+  const match = cleaned.match(
+    /^(.+?(?:examination|exam\b|internal\s*test|internal\s*assessment|model\s*exam|terminal\s*test|unit\s*test|test\b|assessment\b))\s*[-–—:]\s*(.+)$/i,
+  )
+  if (match) {
+    const examTitle = match[1].trim()
+    const rest = match[2].trim()
+
+    // Check if rest is like "1 msc chemistry" or "I-M.Sc., Chemistry" or "I M.Sc. Chemistry"
+    const degMatch = rest.match(
+      /^(?:([IVX]{1,4}|\d(?:st|nd|rd|th)?)\s*[-–—/.\s]?\s*(M\.?Sc\.?|B\.?Sc\.?|B\.?E\.?|B\.?Tech\.?|M\.?Tech\.?|M\.?E\.?|B\.?Com\.?|M\.?Com\.?|B\.?A\.?|M\.?A\.?|MCA|MBA|BBA|B\.?Ed\.?|Diploma))\s*(?:[,.\-–—/]\s*(.+))?$/i,
+    )
+    if (degMatch) {
+      const year = degMatch[1]
+      const deg = degMatch[2]
+      const branch = (degMatch[3] ?? '').trim()
+      const formattedDeg = formatDegreeTitle(year, deg)
+      const classInfo = branch ? `${formattedDeg}, ${branch}` : formattedDeg
+      const semester = year.replace(/[^0-9IVX]/gi, '').toUpperCase()
+      return { examTitle, classInfo, semester: semester === '1' ? 'I' : semester }
+    }
+
+    const semMatch = rest.match(/^([IVX]{1,4}|\d(?:st|nd|rd|th)?)\s*[-–—\s]\s*(.+)$/i)
+    const semester = semMatch ? semMatch[1].toUpperCase() : undefined
+    return { examTitle, classInfo: rest, semester }
+  }
+
+  // Check if raw line itself is like "1 msc chemistry" without exam word
+  const standaloneDegMatch = cleaned.match(
+    /^(?:([IVX]{1,4}|\d(?:st|nd|rd|th)?)\s*[-–—/.\s]?\s*(M\.?Sc\.?|B\.?Sc\.?|B\.?E\.?|B\.?Tech\.?|M\.?Tech\.?|M\.?E\.?|B\.?Com\.?|M\.?Com\.?|B\.?A\.?|M\.?A\.?|MCA|MBA|BBA|B\.?Ed\.?|Diploma))\s*(?:[,.\-–—/]\s*(.+))?$/i,
+  )
+  if (standaloneDegMatch) {
+    const year = standaloneDegMatch[1]
+    const deg = standaloneDegMatch[2]
+    const branch = (standaloneDegMatch[3] ?? '').trim()
+    const formattedDeg = formatDegreeTitle(year, deg)
+    const classInfo = branch ? `${formattedDeg}, ${branch}` : formattedDeg
+    const semester = year.replace(/[^0-9IVX]/gi, '').toUpperCase()
+    return { examTitle: '', classInfo, semester: semester === '1' ? 'I' : semester }
+  }
+
+  return { examTitle: cleaned }
+}
+
 function parseHeader(lines: string[]): PaperHeader {
   const header: PaperHeader = {}
   /** Header lines nothing else claimed — the subject usually hides in here. */
   const spare: string[] = []
+  let inlineSubject: string | undefined = undefined
 
   for (const line of lines) {
     // An explicit label always wins over the guesswork further down.
@@ -258,8 +357,28 @@ function parseHeader(lines: string[]): PaperHeader {
       header.department = line.trim()
       continue
     }
-    if (!header.examTitle && /examination|exam\b|assessment|test\b/i.test(line)) {
-      header.examTitle = line.trim()
+
+    // Check for degree / class line (e.g. "1 msc chemistry", "I M.Sc Chemistry", "1-M.Sc., Chemistry")
+    const degMatch = line.match(
+      /^(?:([IVX]{1,4}|\d(?:st|nd|rd|th)?)\s*[-–—/.\s]?\s*(M\.?Sc\.?|B\.?Sc\.?|B\.?E\.?|B\.?Tech\.?|M\.?Tech\.?|M\.?E\.?|B\.?Com\.?|M\.?Com\.?|B\.?A\.?|M\.?A\.?|MCA|MBA|BBA|B\.?Ed\.?|Diploma))\s*[,.\-–—/]?\s*(.*)$/i,
+    )
+    if (degMatch) {
+      if (!header.degree) header.degree = formatDegreeTitle(degMatch[1], degMatch[2])
+      if (!header.semester) {
+        const y = degMatch[1].toUpperCase()
+        header.semester = y === '1' ? 'I' : (y === '2' ? 'II' : (y === '3' ? 'III' : (y === '4' ? 'IV' : y)))
+      }
+      if (degMatch[3].trim()) {
+        inlineSubject = degMatch[3].trim()
+      }
+      continue
+    }
+
+    if (!header.examTitle && /examination|exam\b|assessment|test\b|internal\b/i.test(line)) {
+      const split = splitExamTitleAndClass(line.trim())
+      if (split.examTitle) header.examTitle = split.examTitle
+      if (split.semester && !header.semester) header.semester = split.semester
+      if (split.classInfo && !header.degree) header.degree = split.classInfo
       continue
     }
 
@@ -268,7 +387,8 @@ function parseHeader(lines: string[]): PaperHeader {
     )
     if (duration && !header.duration) header.duration = duration[1].trim()
 
-    const maxMarks = line.match(/max(?:imum)?\.?\s*marks?\s*[:\-]\s*(\d{1,4})/i)
+    const maxMarks = line.match(/(?:max(?:imum)?\.?\s*marks?|total\s*marks?|full\s*marks?|^marks?|\bmax\b)\s*[:\-–=]?\s*(\d{1,4})/i) ||
+      line.match(/\b(\d{1,3})\s*marks?\b/i)
     if (maxMarks && !header.maxMarks) header.maxMarks = maxMarks[1]
 
     const sem = line.match(/semester\s*[:\-]?\s*([IVX]{1,4}|\d)\b/i)
@@ -284,7 +404,8 @@ function parseHeader(lines: string[]): PaperHeader {
       }
     }
 
-    const date = line.match(/date\s*[:\-]\s*(.+?)\s*$/i)
+    const date = line.match(/(?:date|dt\.?)\s*[:\-–=]\s*([^\s|,;]+(?:\s+[^\s|,;]+)?)/i) ||
+      line.match(/\b(\d{1,2}[./\-]\d{1,2}[./\-]\d{2,4})\b/)
     if (date && !header.date) header.date = date[1].trim()
 
     if (!duration && !maxMarks && !sem && !code && !date && !labelled) spare.push(line)
@@ -306,7 +427,11 @@ function parseHeader(lines: string[]): PaperHeader {
 
   if (!header.courseTitle) {
     const subject = pickSubjectLine(spare)
-    if (subject) header.courseTitle = subject
+    if (subject) {
+      header.courseTitle = subject
+    } else if (inlineSubject) {
+      header.courseTitle = inlineSubject
+    }
   }
 
   return header
@@ -613,6 +738,11 @@ export function parseRawText(raw: string): ParsedPaper {
     if (!p.formula) continue
     for (const q of p.questions) {
       if (q.marks === undefined && q.subs.length === 0) q.marks = p.formula.per
+      if (q.subs.length > 0) {
+        for (const sub of q.subs) {
+          if (sub.marks === undefined) sub.marks = q.marks ?? p.formula.per
+        }
+      }
     }
   }
 
@@ -624,16 +754,7 @@ export function parseRawText(raw: string): ParsedPaper {
     }
   }
 
-  const totalMarks = parts.reduce(
-    (sum, p) =>
-      sum +
-      p.questions.reduce(
-        (qs, q) =>
-          qs + (q.subs.length ? q.subs.reduce((ss, s) => ss + (s.marks ?? 0), 0) : q.marks ?? 0),
-        0,
-      ),
-    0,
-  )
+  const totalMarks = calculateTotalMarks({ header, parts, totalMarks: 0, warnings: [] })
 
   const questionCount = parts.reduce((n, p) => n + p.questions.length, 0)
   if (questionCount === 0) warnings.push('No questions were detected — check the input format.')
@@ -647,16 +768,60 @@ export function parseRawText(raw: string): ParsedPaper {
   return { header, parts, totalMarks, warnings }
 }
 
+/** Calculate the actual total marks for the paper accurately */
+export function calculateTotalMarks(paper: ParsedPaper): number {
+  if (!paper || !paper.parts || paper.parts.length === 0) {
+    if (paper?.header?.maxMarks && Number(paper.header.maxMarks) > 0) {
+      return Number(paper.header.maxMarks)
+    }
+    return 0
+  }
+
+  // A part that states a formula is worth what it says. "Answer any two
+  // questions (2 x 8 = 16)" is 16 however many are printed to choose from, so
+  // adding every question up there overstates the paper. Only when fewer
+  // questions are present than the formula counts — a part-pasted paper — does
+  // what is actually there win.
+  let sum = 0
+  for (const part of paper.parts) {
+    let questionSum = 0
+    for (const q of part.questions) {
+      if (q.subs && q.subs.length > 0) {
+        const subSum = q.subs.reduce((sSum, s) => sSum + (s.marks ?? 0), 0)
+        questionSum += subSum > 0 ? subSum : (q.marks ?? 0)
+      } else {
+        questionSum += q.marks ?? 0
+      }
+    }
+
+    const stated = part.formula?.total && part.formula.total > 0
+      ? part.formula.total
+      : (part.formula?.count && part.formula?.per
+          ? part.formula.count * part.formula.per
+          : 0)
+
+    if (stated > 0) {
+      const short =
+        part.formula?.count != null &&
+        part.questions.length < part.formula.count &&
+        questionSum > 0 &&
+        questionSum < stated
+      sum += short ? questionSum : stated
+    } else {
+      sum += questionSum
+    }
+  }
+
+  if (sum > 0) return sum
+
+  // 3. Fallback to header maxMarks
+  if (paper.header?.maxMarks && Number(paper.header.maxMarks) > 0) {
+    return Number(paper.header.maxMarks)
+  }
+  return 0
+}
+
 /** Recompute totalMarks after the user edits the paper in the validation modal. */
 export function recomputeTotal(paper: ParsedPaper): number {
-  return paper.parts.reduce(
-    (sum, p) =>
-      sum +
-      p.questions.reduce(
-        (qs, q) =>
-          qs + (q.subs.length ? q.subs.reduce((ss, s) => ss + (s.marks ?? 0), 0) : q.marks ?? 0),
-        0,
-      ),
-    0,
-  )
+  return calculateTotalMarks(paper)
 }

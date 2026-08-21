@@ -8,12 +8,13 @@ import type { Item, Sheet, SheetLayout } from '../types'
  */
 export function buildSheets(items: Item[], layout: SheetLayout, mirror = false): Sheet[] {
   const ready = items.filter((i) => i.paper && i.paper.parts.length > 0)
+  if (ready.length === 0) return []
 
   if (layout === 'single') {
     return ready.map((item) => ({ kind: 'single' as const, id: `s_${item.id}`, item }))
   }
 
-  if (mirror) {
+  if (mirror || ready.length === 1) {
     return ready.map((item) => ({ kind: 'split' as const, id: `d_${item.id}`, top: item, bottom: item }))
   }
 
@@ -23,7 +24,7 @@ export function buildSheets(items: Item[], layout: SheetLayout, mirror = false):
       kind: 'split',
       id: `d_${ready[i].id}`,
       top: ready[i],
-      bottom: ready[i + 1],
+      bottom: ready[i + 1] ?? ready[i],
     })
   }
   return sheets

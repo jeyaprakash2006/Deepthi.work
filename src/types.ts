@@ -52,6 +52,7 @@ export interface PaperHeader {
   institution?: string
   department?: string
   examTitle?: string
+  degree?: string
   courseCode?: string
   courseTitle?: string
   semester?: string
@@ -74,6 +75,7 @@ export interface StyleTokens {
   institution: string
   department: string
   examTitle: string
+  degree: string
   courseCode: string
   courseTitle: string
   semester: string

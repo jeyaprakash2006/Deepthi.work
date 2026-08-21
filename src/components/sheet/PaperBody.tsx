@@ -18,6 +18,7 @@ import type {
   SheetGroup,
   StyleTokens,
 } from '../../types'
+import { calculateTotalMarks } from '../../lib/parser'
 import { resolveHeader } from '../../lib/styleTokens'
 
 export interface EditHandlers {
@@ -222,15 +223,7 @@ export function PaperBody({ paper, tokens, edit, move }: Props) {
     if (!edit) return
     const next: ParsedPaper = structuredClone(paper)
     mutate(next)
-    next.totalMarks = next.parts.reduce(
-      (sum, part) =>
-        sum +
-        part.questions.reduce(
-          (qSum, q) => qSum + (q.marks ?? 0) + q.subs.reduce((sSum, sub) => sSum + (sub.marks ?? 0), 0),
-          0,
-        ),
-      0,
-    )
+    next.totalMarks = calculateTotalMarks(next)
     edit.onPaper(next)
   }
 
@@ -709,6 +702,12 @@ function QuestionRows({
 export function sheetStyle(tokens: StyleTokens, _half = false, fit = 1): CSSProperties {
   const px = (tokens.baseFontSize * 96) / 72
   return {
+    // The font choice had nowhere to land: the sheet hardcoded a serif stack,
+    // so picking "Inter / Sans" changed a token nothing read.
+    ['--sheet-font' as string]:
+      tokens.fontFamily === 'sans'
+        ? "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+        : "'Times New Roman', Times, Georgia, serif",
     ['--fs' as string]: `${px.toFixed(2)}px`,
     ['--fit' as string]: String(fit),
     ['--ink' as string]: tokens.accent,

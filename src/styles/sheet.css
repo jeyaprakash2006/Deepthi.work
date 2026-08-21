@@ -11,7 +11,7 @@
   height: 1123px;
   background: #ffffff;
   color: #000000;
-  font-family: 'Times New Roman', Times, Georgia, serif;
+  font-family: var(--sheet-font, 'Times New Roman', Times, Georgia, serif);
   --fit: 1;
   --pm-top: 42px; --pm-right: 46px; --pm-bottom: 42px; --pm-left: 46px;
   --cp-top: 5px; --cp-right: 7px; --cp-bottom: 5px; --cp-left: 7px;
