@@ -51,6 +51,14 @@ function nextPaint(): Promise<void> {
   )
 }
 
+/**
+ * The sheet is captured as a picture, so its resolution is fixed at capture
+ * time. A4 is 794 CSS px wide; at scale 2 that lands on paper at ~190 dpi,
+ * which reads soft in print. 3.2 puts it just over 300 dpi — the point where
+ * printed text stops looking rasterised.
+ */
+const PRINT_SCALE = 3.2
+
 async function capturePage(page: HTMLElement, scale: number): Promise<HTMLCanvasElement> {
   const html2canvas = (await import('html2canvas')).default
   const index = page.dataset.pageIndex
@@ -100,7 +108,7 @@ export async function exportPdf(stage: HTMLElement, opts: ExportOptions): Promis
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
   for (let i = 0; i < pages.length; i++) {
-    const canvas = await capturePage(pages[i], opts.scale ?? 2)
+    const canvas = await capturePage(pages[i], opts.scale ?? PRINT_SCALE)
     if (i > 0) pdf.addPage()
     pdf.addImage(
       canvas.toDataURL('image/png'),
@@ -142,7 +150,7 @@ export async function exportSeparatePdfs(
       const pageIndex = doc.pageIndices[i]
       const pageEl = pages.find((p) => Number(p.dataset.pageIndex) === pageIndex) || pages[pageIndex]
       if (!pageEl) continue
-      const canvas = await capturePage(pageEl, opts.scale ?? 2)
+      const canvas = await capturePage(pageEl, opts.scale ?? PRINT_SCALE)
       if (i > 0) pdf.addPage()
       pdf.addImage(
         canvas.toDataURL('image/png'),
@@ -168,7 +176,7 @@ export async function exportSeparatePdfs(
       const pageIndex = doc.pageIndices[i]
       const pageEl = pages.find((p) => Number(p.dataset.pageIndex) === pageIndex) || pages[pageIndex]
       if (!pageEl) continue
-      const canvas = await capturePage(pageEl, opts.scale ?? 2)
+      const canvas = await capturePage(pageEl, opts.scale ?? PRINT_SCALE)
       if (i > 0) pdf.addPage()
       pdf.addImage(
         canvas.toDataURL('image/png'),
@@ -202,7 +210,7 @@ export async function exportImage(stage: HTMLElement, opts: ExportOptions): Prom
   const blobs: Blob[] = []
 
   for (let i = 0; i < pages.length; i++) {
-    const canvas = await capturePage(pages[i], opts.scale ?? 2)
+    const canvas = await capturePage(pages[i], opts.scale ?? PRINT_SCALE)
     blobs.push(await canvasToBlob(canvas))
     opts.onProgress?.(i + 1, pages.length)
   }

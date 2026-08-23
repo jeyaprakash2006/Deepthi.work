@@ -1,7 +1,7 @@
 /* Clean, modern, high-contrast Light Theme for the Question Paper Formatter */
 
 :root {
-  --bg: #f7f9fc;
+  --bg: #ffffff;
   --bg-subtle: #f1f5f9;
   --card: #ffffff;
   --card-hi: #f8fafc;
@@ -565,9 +565,15 @@ body {
     padding-bottom: 68px;
   }
 
+  /* That padding is for .mobile-nav, which the Flutter UI hides in favour of
+     its own 54px bar — leaving 14px of dead white under the sheet. */
+  .app:has(.flutter-ui) {
+    padding-bottom: 0;
+  }
+
   .mobile-nav {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     position: fixed;
     bottom: 0;
     left: 0;
@@ -1682,7 +1688,7 @@ body {
 /* 4-Tab Navigation Bar (NO horizontal scroll) */
 .flutter-tabs {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   width: 100%;
   background: #ffffff;
   border-top: 1px solid #e2e8f0;
@@ -1898,7 +1904,7 @@ body {
   max-width: 780px;
   height: 100%;
   overflow-y: auto;
-  padding: 12px 10px 85px 10px;
+  padding: 12px 10px 62px 10px;
   box-sizing: border-box;
   margin: 0 auto;
 }
@@ -3057,6 +3063,21 @@ textarea::placeholder {
     max-height: calc(82vh - 54px);
     overflow-y: auto;
   }
+
+  /* Typing a heading or a paper is the whole job at that moment — it gets the
+     whole screen, not a sheet with the paper peeking out behind it. */
+  .flutter-tools-pane--full {
+    top: 0;
+    height: auto;
+    max-height: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    box-shadow: none;
+  }
+
+  .flutter-tools-pane--full .flutter-tab-content {
+    max-height: none;
+  }
 }
 
 @keyframes flutterSheetSlideUp {
@@ -3915,4 +3936,346 @@ select:focus {
   flex: none;
   margin-top: 1px;
   opacity: 0.75;
+}
+
+/* ── Delete: how far, then are you sure ───────────────────────────────────
+   Two very different losses sit behind one bin, so the first question is
+   which one, and the second is whether you meant it. */
+
+.qc-ask {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.qc-ask__box {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 18px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.22);
+}
+
+.qc-ask__q {
+  margin: 0 0 4px;
+  font-size: 15.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.qc-ask__note {
+  margin: -4px 0 6px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+.qc-ask__opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 13px;
+  border-radius: 12px;
+  border: 1px solid #e3e9f2;
+  background: #ffffff;
+  color: #0f172a;
+  text-align: left;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.qc-ask__opt > svg {
+  flex: none;
+  margin-top: 2px;
+  color: #64748b;
+}
+
+.qc-ask__opt:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.qc-ask__opt--all:hover {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.qc-ask__opt--all:hover > svg {
+  color: #dc2626;
+}
+
+.qc-ask__opt-t {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.qc-ask__opt-s {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #7c8798;
+}
+
+.qc-ask__row {
+  display: flex;
+  gap: 8px;
+}
+
+.qc-ask__row > .btn {
+  flex: 1;
+}
+
+.qc-ask__go {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+.qc-ask__go:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.qc-paper-name {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.qc-parse {
+  width: 100%;
+}
+
+/* Sheet tools on the review screen: icons until you want one. */
+.qc-tools {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #eaeef5;
+  flex: none;
+}
+
+.qc-tool {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  border: 1px solid #e3e9f2;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.qc-tool:hover {
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.qc-tool--active {
+  border-color: #2f80ff;
+  background: #eaf2ff;
+  color: #1f6fe5;
+}
+
+
+/* A paper on screen fills it: the page's own back-to-Tools bar would be one
+   more row between the teacher and the paper, and the buttons on the sheet
+   already lead back from both the editor and the review. */
+.app:has(.flutter-ui--paper) .topbar {
+  display: none;
+}
+
+/* A paper on screen fills it: the page's own back-to-Tools bar would be one
+   more row between the teacher and the paper, and the buttons on the sheet
+   already lead back from both the editor and the review. */
+.app:has(.flutter-ui--paper) .topbar {
+  display: none;
+}
+
+/* ── White ground ─────────────────────────────────────────────────────────
+   Every screen sits on white. The cards keep their thin border, which is what
+   separates them now that there is no grey behind them; the A4 keeps its own
+   border and shadow so the sheet still reads as a sheet against the page. */
+
+body,
+.app,
+.flutter-ui,
+.flutter-preview-pane,
+.flutter-canvas,
+.flutter-tools-pane,
+.flutter-tab-body,
+.flutter-tab-content,
+.qc-intake {
+  background: #ffffff;
+}
+
+/* The dotted desk went with the grey — on white it reads as dirt. */
+.flutter-canvas {
+  background-image: none;
+}
+
+.flutter-card {
+  border-color: #e6ebf3;
+}
+
+/* Against white the sheet needs its edge back. */
+.flutter-sheet-wrapper .sheet {
+  box-shadow: 0 2px 14px rgba(15, 23, 42, 0.1);
+}
+
+/* ── The two ways forward, floating over the sheet ────────────────────────
+   Pills rather than a bar, so the page underneath is not boxed off and the
+   choice reads as an action rather than a footer. */
+
+.qc-stage {
+  left: 0;
+  right: 0;
+  /* The pane runs on behind the nav bar, so this clears the nav and leaves a
+     gap under the pills rather than gluing them to the tabs. */
+  position: absolute;
+  bottom: 30px;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.qc-stage > .btn {
+  pointer-events: auto;
+  flex: 0 0 auto;
+  width: auto;
+  padding: 13px 22px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 700;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.18);
+}
+
+.qc-stage > .btn--ghost {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(6px);
+  border-color: #dbe3ee;
+}
+
+.qc-stage > .btn--primary {
+  box-shadow: 0 6px 20px rgba(47, 128, 255, 0.4);
+}
+
+/* Sits inside a list row, so it stays the size of its own words. */
+.qc-row-parse {
+  width: auto;
+  flex: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* A tool group opens where its icon is, over the paper — the same floating
+   card the columns panel uses, so both behave alike. */
+.qc-tool-panel {
+  position: absolute;
+  top: 104px;
+  left: 14px;
+  right: 14px;
+  z-index: 30;
+  max-width: 680px;
+  margin: 0 auto;
+  max-height: calc(100% - 170px);
+  overflow-y: auto;
+  padding: 16px 14px 14px;
+  border-radius: 16px;
+  border: 1px solid #e6ebf3;
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.18);
+}
+
+.qc-tool-panel .clean-accordion-card:last-child {
+  margin-bottom: 0;
+}
+
+/* ── One scroll, top to the nav ───────────────────────────────────────────
+   The bar, the tools, the sheet and the buttons move together, so nothing is
+   pinned out of reach and the page ends where the tabs begin. */
+
+.flutter-preview-pane {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.flutter-canvas {
+  overflow: visible !important;
+  overflow-y: visible !important;
+  flex: none;
+  height: auto;
+}
+
+.qc-stage {
+  /* Fixed to the screen, 10px above the 54px nav: sticky sat wherever the
+     content ended, which on a short paper is nowhere near the bottom. */
+  position: fixed;
+  left: auto;
+  right: 14px;
+  bottom: 64px;
+  justify-content: flex-end;
+  padding: 0;
+  pointer-events: none;
+}
+
+.qc-stage > .btn {
+  pointer-events: auto;
+}
+
+/* Just the arrow: the word "Expand" said what the arrow already showed. */
+.clean-accordion-caret {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: #64748b;
+  transition: transform 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.clean-accordion-caret--open {
+  transform: rotate(180deg);
+  color: #2f80ff;
+  background: #eaf2ff;
+}
+
+/* The icon above already chose this group, so its own expand button would be
+   one more thing to press to see what you asked for. */
+.qc-tool-panel .clean-accordion-head-btn {
+  pointer-events: none;
+  padding-bottom: 4px;
+}
+
+.qc-tool-panel .clean-accordion-caret,
+.qc-tool-panel .clean-accordion-pill {
+  display: none;
+}
+
+/* The page stops just short of the pills, so the sheet's last line never ends
+   up under one. Measured against where the buttons actually sit rather than
+   added up from their offsets — the scaled sheet carries a negative margin
+   that the arithmetic would miss. */
+.flutter-preview-pane {
+  padding-bottom: 75px;
 }

@@ -4,8 +4,8 @@ import { uid } from '../lib/id'
 import { parseFormula, recomputeTotal } from '../lib/parser'
 import {
   BankIcon,
+  ChevronIcon,
   ClipboardIcon,
-  FileUpIcon,
   PlusIcon,
   SettingsIcon,
   TrashIcon,
@@ -35,13 +35,13 @@ export function InlineTableEditor({
   tokens,
   onChange,
   onTokens,
-  itemsCount = 1,
-  activeItemIndex = 0,
-  onAddQuestionPaper,
-  onSwitchQuestionPaper,
-  onDeleteQuestionPaper,
-  onUploadFile,
-  onPasteText,
+  itemsCount: _itemsCount = 1,
+  activeItemIndex: _activeItemIndex = 0,
+  onAddQuestionPaper: _onAddQuestionPaper,
+  onSwitchQuestionPaper: _onSwitchQuestionPaper,
+  onDeleteQuestionPaper: _onDeleteQuestionPaper,
+  onUploadFile: _onUploadFile,
+  onPasteText: _onPasteText,
 }: Props) {
   const [draft, setDraft] = useState<ParsedPaper>(() => clonePaper(paper))
   const [headerOpen, setHeaderOpen] = useState(false)
@@ -143,47 +143,6 @@ export function InlineTableEditor({
 
   return (
     <div className="clean-paper-editor">
-      {/* ── QUICK ACTION BUTTONS (Upload PDF & Paste Text for this paper) ── */}
-      <div className="clean-table-top-actions">
-        {onUploadFile && (
-          <button
-            type="button"
-            className="clean-quick-btn clean-quick-btn--upload"
-            onClick={onUploadFile}
-            title="Upload PDF or image for this question paper"
-          >
-            <FileUpIcon size={13} />
-            <span>Upload PDF</span>
-          </button>
-        )}
-        {onPasteText && (
-          <button
-            type="button"
-            className="clean-quick-btn clean-quick-btn--paste"
-            onClick={onPasteText}
-            title="Paste questions for this paper"
-          >
-            <ClipboardIcon size={13} />
-            <span>Paste Text</span>
-          </button>
-        )}
-
-        {onDeleteQuestionPaper && (
-          <button
-            type="button"
-            className="clean-quick-btn clean-quick-btn--delete"
-            onClick={() => {
-              if (window.confirm('Delete this whole question paper?')) {
-                onDeleteQuestionPaper(activeItemIndex)
-              }
-            }}
-            title="Delete this question paper"
-          >
-            <TrashIcon size={13} />
-            <span>Delete</span>
-          </button>
-        )}
-      </div>
 
       {/* ── ACCORDION 1: Header (Editable in input boxes for all papers) ─── */}
       <div className="flutter-card clean-accordion-card" style={{ marginBottom: 10 }}>
@@ -194,8 +153,8 @@ export function InlineTableEditor({
           aria-expanded={headerOpen}
         >
           <span className="flutter-card__title"><BankIcon size={15} /> Header</span>
-          <span className={`clean-accordion-pill ${headerOpen ? 'clean-accordion-pill--open' : ''}`}>
-            {headerOpen ? '▲ Collapse' : '▼ Expand'}
+          <span className={`clean-accordion-caret ${headerOpen ? 'clean-accordion-caret--open' : ''}`}>
+            <ChevronIcon size={16} />
           </span>
         </button>
 
@@ -246,8 +205,8 @@ export function InlineTableEditor({
           aria-expanded={detailsOpen}
         >
           <span className="flutter-card__title"><ClipboardIcon size={15} /> Paper Header Details</span>
-          <span className={`clean-accordion-pill ${detailsOpen ? 'clean-accordion-pill--open' : ''}`}>
-            {detailsOpen ? '▲ Collapse' : '▼ Expand'}
+          <span className={`clean-accordion-caret ${detailsOpen ? 'clean-accordion-caret--open' : ''}`}>
+            <ChevronIcon size={16} />
           </span>
         </button>
 
@@ -615,39 +574,6 @@ export function InlineTableEditor({
           </button>
         </div>
 
-        {/* ── DISTINCT 2ND QUESTION PAPER CREATION / SWITCH BUTTON ───────── */}
-        <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px dashed #e2e8f0', textAlign: 'center' }}>
-          {itemsCount <= 1 ? (
-            <button
-              type="button"
-              className="clean-add-new-qp-btn"
-              onClick={onAddQuestionPaper}
-            >
-              <PlusIcon size={14} />
-              <span>Add New Question Paper (2nd Paper for Split A4)</span>
-            </button>
-          ) : (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
-              {activeItemIndex === 0 ? (
-                <button
-                  type="button"
-                  className="clean-add-new-qp-btn"
-                  onClick={() => onSwitchQuestionPaper?.(1)}
-                >
-                  <span>Go to Question Paper 2 →</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="clean-add-new-qp-btn"
-                  onClick={() => onSwitchQuestionPaper?.(0)}
-                >
-                  <span>← Back to Question Paper 1</span>
-                </button>
-              )}
-            </div>
-          )}
-        </div>
       </div>
     </div>
   )

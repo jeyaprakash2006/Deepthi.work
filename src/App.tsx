@@ -278,6 +278,12 @@ export function Formatter({ onExit }: { onExit: () => void }) {
   const canUndo = past.current.length > 0
   const canRedo = future.current.length > 0
 
+  const markApproved = useCallback((itemId: string) => {
+    setItems((prev) =>
+      prev.map((it) => (it.id === itemId ? { ...it, approvedAt: Date.now() } : it)),
+    )
+  }, [])
+
   const handleReset = useCallback(() => {
     clearWorkspace()
     setMaster({ captured: false, tokens: { ...DEFAULT_TOKENS } })
@@ -555,7 +561,7 @@ export function Formatter({ onExit }: { onExit: () => void }) {
           })
         }
 
-        await exportSeparatePdfs(stage, docs, { scale: 2, onProgress })
+        await exportSeparatePdfs(stage, docs, { onProgress })
       } else {
         const stage = stageRef.current
         if (!stage) throw new Error('The export stage is not ready.')
@@ -598,7 +604,7 @@ export function Formatter({ onExit }: { onExit: () => void }) {
         })
       })
 
-      await exportSeparatePdfs(stage, docs, { scale: 2, onProgress })
+      await exportSeparatePdfs(stage, docs, { onProgress })
       say(ready.length === 1 ? 'PDF downloaded successfully.' : 'ZIP of PDFs downloaded successfully.')
     } catch (err) {
       say(err instanceof Error ? err.message : 'Export failed.', true)
@@ -693,13 +699,22 @@ export function Formatter({ onExit }: { onExit: () => void }) {
           onLoadSample={loadSample}
           onAddItem={addItem}
           onDeleteItem={removeItem}
+          onApprove={markApproved}
           onReset={handleReset}
           onUndo={handleUndo}
           onRedo={handleRedo}
           canUndo={canUndo}
           canRedo={canRedo}
           onSavePaper={(itemId, paper, rawText) =>
-            patchItem(itemId, { paper, rawText: rawText ?? '', status: 'approved', error: undefined })
+            // A freshly parsed paper is a different paper: whatever was
+            // approved before it does not carry over to Export.
+            patchItem(itemId, {
+              paper,
+              rawText: rawText ?? '',
+              status: 'approved',
+              error: undefined,
+              approvedAt: undefined,
+            })
           }
         />
       ) : (

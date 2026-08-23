@@ -190,6 +190,11 @@ export interface Item {
   error?: string
   /** Per-item style tokens for independent styling & formatting. */
   tokens?: StyleTokens
+  /**
+   * When the teacher last pressed "Done & save" on this paper. Export lists
+   * only approved papers, so a half-edited one cannot be printed by accident.
+   */
+  approvedAt?: number
 }
 
 export interface MasterStyle {

@@ -24,14 +24,11 @@ import {
   SlidersIcon,
   SplitPageIcon,
   SinglePageIcon,
-  StyleIcon,
-  RotateCcwIcon,
   AlertIcon,
   TrashIcon,
+  XIcon,
   UndoIcon,
   RedoIcon,
-  PencilIcon,
-  XIcon,
   ClipboardIcon,
   TextIcon,
   LayoutIcon,
@@ -66,6 +63,7 @@ interface Props {
   onLoadSample: () => void
   onAddItem: () => void
   onDeleteItem: (id: string) => void
+  onApprove: (itemId: string) => void
   onReset: () => void
   onUndo: () => void
   onRedo: () => void
@@ -74,7 +72,7 @@ interface Props {
   onSavePaper?: (itemId: string, paper: ParsedPaper, rawText?: string) => void
 }
 
-type TabKey = 'master' | 'content' | 'layout' | 'output'
+type TabKey = 'header' | 'content' | 'export'
 
 export function FlutterLayout({
   master: _master,
@@ -99,6 +97,7 @@ export function FlutterLayout({
   onLoadSample: _onLoadSample,
   onAddItem,
   onDeleteItem,
+  onApprove,
   onReset,
   onUndo,
   onRedo,
@@ -107,8 +106,9 @@ export function FlutterLayout({
   onSavePaper,
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>('content')
-  const [panelOpen, setPanelOpen] = useState(false)
-  const [swipeDir, setSwipeDir] = useState<'left' | 'right' | null>(null)
+  // The content screen is the app's front door: you land on it with Content
+  // already selected, rather than on an empty sheet you cannot type into.
+  const [panelOpen, setPanelOpen] = useState(true)
   const [pasteText, setPasteText] = useState('')
   const [pasteHint, setPasteHint] = useState('')
   const [knownInstitutions, setKnownInstitutions] = useState<string[]>(() => remembered('institution'))
@@ -118,9 +118,9 @@ export function FlutterLayout({
   // Layout Tab Accordion States
   const [layoutSecSheet, setLayoutSecSheet] = useState(true)
   const [layoutSecType, setLayoutSecType] = useState(true)
-  const [layoutSecHeader, setLayoutSecHeader] = useState(false)
-  const [layoutSecGrid, setLayoutSecGrid] = useState(false)
-  const [layoutSecFooter, setLayoutSecFooter] = useState(false)
+  const [layoutSecHeader, setLayoutSecHeader] = useState(true)
+  const [layoutSecGrid, setLayoutSecGrid] = useState(true)
+  const [layoutSecFooter, setLayoutSecFooter] = useState(true)
 
   // Output Tab Selected Papers State
   const [selectedExportIds, setSelectedExportIds] = useState<string[]>([])
@@ -131,13 +131,11 @@ export function FlutterLayout({
     setSelectedExportIds(readyIds)
   }, [items])
 
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
 
   const activeItem = items.find((i) => i.id === activeItemId) || items[0]
 
-  // A second paper is only useful once the first one exists. Offering it while
-  // paper 1 is still empty just makes two empty papers to keep track of.
-  const canAddPaper = items.length === 0 || Boolean(items[items.length - 1]?.paper)
+  // Nothing has been put in yet, so there is nothing to take out.
+  const canDelete = items.some((item) => Boolean(item.paper))
 
   // The paste box belongs to the paper that was open when it was opened.
   // Carrying its text to the next paper would file item 1's questions under
@@ -149,39 +147,6 @@ export function FlutterLayout({
   const activeIndex = items.findIndex((i) => i.id === activeItem?.id)
   const currentIdx = activeIndex >= 0 ? activeIndex : 0
 
-  // Touch Swipe Handler to switch between Item 1, Item 2, etc.
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 1) {
-      touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-    }
-  }
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStartRef.current || e.changedTouches.length === 0) return
-    const deltaX = e.changedTouches[0].clientX - touchStartRef.current.x
-    const deltaY = e.changedTouches[0].clientY - touchStartRef.current.y
-    touchStartRef.current = null
-
-    // Horizontal swipe threshold: 35px & more horizontal than vertical
-    if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY)) {
-      if (deltaX < 0) {
-        // Swiped Left -> Next Item
-        if (currentIdx < items.length - 1) {
-          setSwipeDir('left')
-          onSelectActiveItem(items[currentIdx + 1].id)
-          setTimeout(() => setSwipeDir(null), 250)
-        }
-      } else {
-        // Swiped Right -> Previous Item
-        if (currentIdx > 0) {
-          setSwipeDir('right')
-          onSelectActiveItem(items[currentIdx - 1].id)
-          setTimeout(() => setSwipeDir(null), 250)
-        }
-      }
-    }
-  }
-
   // Auto scale calculation for A4 (794 x 1123 px)
   const previewBoxRef = useRef<HTMLDivElement>(null)
   const sheetWrapRef = useRef<HTMLDivElement>(null)
@@ -192,17 +157,29 @@ export function FlutterLayout({
    * nothing to say so. Measure it and speak up.
    */
   const [cutOff, setCutOff] = useState(false)
+
+  /**
+   * Deleting asks how far first, then asks again. Two different losses hide
+   * behind one bin — this paper, or the whole desk — and neither comes back.
+   */
+  const [deleteAsk, setDeleteAsk] = useState<null | 'scope' | 'page' | 'all'>(null)
+
+  /** Which group of sheet tools the review screen has opened, if any. */
+  const [layoutGroup, setLayoutGroup] = useState<null | 'sheet' | 'type' | 'heading' | 'table'>(null)
+
+  /** Edit the table, approve it, then review the sheet before saving. */
+  const [stage, setStage] = useState<'edit' | 'review'>('edit')
+
   const [scale, setScale] = useState(0.48)
 
   useEffect(() => {
     const updateScale = () => {
       if (!previewBoxRef.current) return
-      const boxWidth = previewBoxRef.current.clientWidth - 16
-      const boxHeight = previewBoxRef.current.clientHeight - 16
-      const scaleW = boxWidth / 794
-      const scaleH = boxHeight / 1123
-      const calculated = Math.min(scaleW, scaleH)
-      setScale(Math.max(0.28, Math.min(1.0, calculated)))
+      // Width decides it: the sheet spans the screen bar a 2px margin each
+      // side, and the page scrolls for whatever height that comes to. Fitting
+      // the height as well left the paper small in the middle of the screen.
+      const boxWidth = previewBoxRef.current.clientWidth - 4
+      setScale(Math.max(0.28, Math.min(1.0, boxWidth / 794)))
     }
     updateScale()
     window.addEventListener('resize', updateScale)
@@ -220,6 +197,7 @@ export function FlutterLayout({
 
   // Master-tab fields describe the whole set, not the paper on screen.
   const patchMasterTokens = (patch: Partial<StyleTokens>) => onTokensAll(patch)
+
 
 
 
@@ -264,6 +242,25 @@ export function FlutterLayout({
   const activePaper: ParsedPaper | null = useMemo(() => {
     return activeItem?.paper ?? null
   }, [activeItem?.paper])
+  /** A paper is on screen — editing it or reviewing it. */
+  const onPaper = Boolean(activePaper) && !panelOpen
+
+  /** Actually in the table editor — not merely at the stage it belongs to. */
+  const editing = stage === 'edit' && onPaper
+
+  /** Review is about one paper: the sheet for the one on screen, not the pile
+   *  of every paper in the workspace stacked down the page. */
+  const visibleSheets = useMemo(() => {
+    const mine = sheets.filter((sheet) =>
+      sheet.kind === 'single'
+        ? sheet.item.id === activeItemId
+        : sheet.top.id === activeItemId || sheet.bottom?.id === activeItemId,
+    )
+    return mine.length ? mine : sheets.slice(0, 1)
+  }, [sheets, activeItemId])
+
+  /** Every sheet in the stack at full size, before the preview scales it. */
+  const sheetsHeight = Math.max(1, visibleSheets.length) * 1123
 
   useEffect(() => {
     const check = () => {
@@ -285,13 +282,13 @@ export function FlutterLayout({
     return () => clearTimeout(timer)
   }, [activePaper, activeTokens, layout, sheets, scale, centerView])
 
+  // Tapping the tab you are already on does nothing: it used to close the
+  // panel, so a second tap on Content dropped you onto the sheet you were not
+  // asking for.
   const handleTabClick = (tab: TabKey) => {
-    if (activeTab === tab && panelOpen) {
-      setPanelOpen(false)
-    } else {
-      setActiveTab(tab)
-      setPanelOpen(true)
-    }
+    setActiveTab(tab)
+    setPanelOpen(true)
+    setLayoutGroup(null)
   }
 
   const handleToggleExportId = (id: string) => {
@@ -300,7 +297,18 @@ export function FlutterLayout({
     )
   }
 
-  const readyItems = items.filter((i) => i.paper)
+  // Export offers what has been approved, not everything with text in it.
+  const readyItems = items.filter((i) => i.paper && i.approvedAt)
+
+  // A paper that loses its approval — re-parsed, or deleted — must lose its
+  // place in the download too, or the count promises PDFs that cannot be made.
+  useEffect(() => {
+    setSelectedExportIds((prev) => {
+      const allowed = new Set(readyItems.map((i) => i.id))
+      const next = prev.filter((id) => allowed.has(id))
+      return next.length === prev.length ? prev : next
+    })
+  }, [readyItems])
 
   const handleExportClick = () => {
     if (onDownloadSelected && selectedExportIds.length > 0) {
@@ -312,122 +320,262 @@ export function FlutterLayout({
 
   // The way a paper gets in. It is the main screen when nothing has been
   // pasted yet, and it stays available inside the Content tab afterwards.
+  // The question-content screen: the papers so far, the box a new one goes
+  // into, and the way to start another. It is the same screen whether it is
+  // reached from the Content tab or found waiting on an empty desk.
+  // The two ways forward ride with the content: after it when the paper is
+  // short, stuck to the foot of the screen once it is long enough to scroll.
+  const renderContent = () => (
+              <div className="flutter-tab-body">
+                <div className="flutter-card">
+                  <div className="flutter-card__head">
+                    <span className="flutter-card__title">
+                      <TextIcon size={15} /> Question Papers ({items.length})
+                    </span>
+                    <span className="flutter-card__sub">
+                      Upload PDF/Word documents or paste text directly.
+                    </span>
+                  </div>
+
+                  <div className="flutter-item-list">
+                    {items.map((item, idx) => (
+                      <div
+                        key={item.id}
+                        className={`flutter-item-tile ${item.id === activeItemId ? 'flutter-item-tile--active' : ''}`}
+                        onClick={() => onSelectActiveItem(item.id)}
+                      >
+                        <div className="flutter-item-tile__info">
+                          <span className="flutter-item-tile__num">{idx + 1}</span>
+                          <div className="flutter-item-tile__text">
+                            <span className="flutter-item-tile__title">
+                              {item.paper?.header.courseTitle ||
+                                item.tokens?.courseTitle ||
+                                'Subject'}
+                            </span>
+                            <span className="flutter-item-tile__meta">
+                              {item.paper
+                                ? `${item.paper.parts.reduce((n, p) => n + p.questions.length, 0)} Questions · ${item.paper.totalMarks} Marks`
+                                : 'No questions parsed yet'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flutter-item-tile__actions">
+                          {item.paper && (
+                            <button
+                              type="button"
+                              className="btn btn--sm btn--primary qc-row-parse"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onSelectActiveItem(item.id)
+                                setPanelOpen(false)
+                                setLayoutGroup(null)
+                                setStage('edit')
+                                setCenterView('table')
+                              }}
+                            >
+                              Parse &amp; Format
+                            </button>
+                          )}
+                          {items.length > 1 && (
+                            <button
+                              type="button"
+                              className="icon-btn"
+                              style={{ color: '#ef4444' }}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onDeleteItem(item.id)
+                              }}
+                              title="Delete Question Paper"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Getting a paper in is its own job, so it gets its own card
+                    rather than hanging off the bottom of the list. */}
+                <div className="flutter-card">
+                  {renderIntake()}
+
+                  {activePaper && (
+                    <div className="flutter-summary-banner">
+                      <span><CheckIcon size={14} /> {activePaper.parts.reduce((n, p) => n + p.questions.length, 0)} Questions</span>
+                      <span>· {activePaper.parts.length} Parts</span>
+                      <span>· {activePaper.totalMarks} Total Marks</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Sits under everything: the next paper is a separate job, not
+                    another way of filling in this one. */}
+                <button
+                  type="button"
+                  className="qc-next"
+                  onClick={() => {
+                    // Whatever is in the box belongs to the paper being typed,
+                    // so it is filed before the box is handed to the next one.
+                    if (activeItem && pasteText.trim()) {
+                      const parsed = parseRawText(pasteText)
+                      const patch: Partial<StyleTokens> = { showDateLine: true }
+                      if (parsed.header.date) patch.date = parsed.header.date
+                      if (parsed.header.maxMarks) {
+                        patch.maxMarks = parsed.header.maxMarks
+                      } else if (parsed.totalMarks > 0) {
+                        patch.maxMarks = String(parsed.totalMarks)
+                      }
+                      if (parsed.header.examTitle) patch.examTitle = parsed.header.examTitle
+                      if (parsed.header.degree) patch.degree = parsed.header.degree
+                      if (parsed.header.courseTitle) patch.courseTitle = parsed.header.courseTitle
+                      if (parsed.header.semester) patch.semester = parsed.header.semester
+                      if (parsed.header.department) patch.department = parsed.header.department
+                      if (parsed.header.institution) patch.institution = parsed.header.institution
+                      if (parsed.header.courseCode) patch.courseCode = parsed.header.courseCode
+                      patchActiveTokens(patch)
+                      onSavePaper?.(activeItem.id, parsed, pasteText)
+                    }
+                    setPasteText('')
+                    onAddItem()
+                  }}
+                >
+                  <PlusIcon size={16} />
+                  <span>Add another</span>
+                </button>
+              </div>
+  )
+
   const renderIntake = () => (
     <>
-    <div className="qc-actions">
-      <label className="qc-action qc-action--upload">
-        <FileUpIcon size={16} />
-        <span>Upload</span>
-        <input
-          type="file"
-          accept=".pdf,.txt,.doc,.docx,image/*"
-          style={{ display: 'none' }}
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (file && activeItem) onUploadFile(activeItem.id, file)
-            e.target.value = ''
-          }}
-        />
-      </label>
+      <div className="qc-actions">
+        <label className="qc-action qc-action--upload">
+          <FileUpIcon size={16} />
+          <span>File upload</span>
+          <input
+            type="file"
+            accept=".pdf,.txt,.doc,.docx,image/*"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file && activeItem) onUploadFile(activeItem.id, file)
+              e.target.value = ''
+            }}
+          />
+        </label>
 
-      <button
-        type="button"
-        className="qc-action qc-action--new"
-        onClick={() => {
-          if (!activeItem) return
-          // An empty part with one empty question, so the table
-          // editor opens on something you can actually type into.
-          onSavePaper?.(
-            activeItem.id,
-            {
-              header: {},
-              parts: [
-                {
-                  id: uid('part'),
-                  label: 'PART A',
-                  instruction: '',
-                  questions: [{ id: uid('q'), number: '1', text: '', subs: [] }],
-                },
-              ],
-              totalMarks: 0,
-              warnings: [],
-            },
-            '',
-          )
-          setPanelOpen(false)
-          setCenterView('table')
-        }}
-      >
-        <PencilIcon size={16} />
-        <span>Create manual</span>
-      </button>
-    </div>
-
-    <div className="qc-paste">
-      <textarea
-        value={pasteText}
-        onChange={(e) => setPasteText(e.target.value)}
-        placeholder={`Part A\n1. Define crystal lattice. (K1, CO1)\n2. What is band gap? (K2, CO2)\n\nPart B\n11. a) Explain semiconductor. (16)\n(OR)\n11. b) Derive continuity equation. (16)`}
-      />
-
-      <div className="qc-paste__row">
         <button
           type="button"
-          className="btn btn--sm btn--ghost"
+          className="qc-action qc-action--paste"
           onClick={async () => {
             try {
               const text = await navigator.clipboard.readText()
               if (text) setPasteText((prev) => (prev ? `${prev}\n${text}` : text))
             } catch {
-              // Clipboard read needs permission the browser may
-              // refuse; typing into the box still works.
+              // The browser can refuse clipboard reads; typing still works.
               setPasteHint('Your browser blocked the clipboard — paste with a long press instead.')
             }
           }}
         >
-          <ClipboardIcon size={15} /> Paste
-        </button>
-        <button
-          type="button"
-          className="btn btn--sm btn--primary"
-          onClick={() => {
-            if (activeItem && pasteText.trim()) {
-              const parsed = parseRawText(pasteText)
-              const patch: Partial<StyleTokens> = { showDateLine: true }
-              if (parsed.header.date) patch.date = parsed.header.date
-              if (parsed.header.maxMarks) {
-                patch.maxMarks = parsed.header.maxMarks
-              } else if (parsed.totalMarks > 0) {
-                patch.maxMarks = String(parsed.totalMarks)
-              }
-              if (parsed.header.examTitle) patch.examTitle = parsed.header.examTitle
-              if (parsed.header.degree) patch.degree = parsed.header.degree
-              if (parsed.header.courseTitle) patch.courseTitle = parsed.header.courseTitle
-              if (parsed.header.semester) patch.semester = parsed.header.semester
-              if (parsed.header.department) patch.department = parsed.header.department
-              if (parsed.header.institution) patch.institution = parsed.header.institution
-              if (parsed.header.courseCode) patch.courseCode = parsed.header.courseCode
-
-              patchActiveTokens(patch)
-              onSavePaper?.(activeItem.id, parsed, pasteText)
-              setPasteText('')
-              setPanelOpen(false)
-              setCenterView('table')
-            }
-          }}
-          disabled={!pasteText.trim()}
-        >
-          OK
+          <ClipboardIcon size={16} />
+          <span>Paste text</span>
         </button>
       </div>
 
-      {pasteHint && <span className="qc-paste__hint">{pasteHint}</span>}
-    </div>
+      <div className="qc-paste">
+        <textarea
+          value={pasteText}
+          onChange={(e) => setPasteText(e.target.value)}
+          placeholder={`Part A\n1. Define crystal lattice. (K1, CO1)\n2. What is band gap? (K2, CO2)\n\nPart B\n11. a) Explain semiconductor. (16)\n(OR)\n11. b) Derive continuity equation. (16)`}
+        />
+
+        {pasteHint && <span className="qc-paste__hint">{pasteHint}</span>}
+      </div>
     </>
   )
 
   return (
-    <div className="flutter-ui">
+    <div className={`flutter-ui ${onPaper ? 'flutter-ui--paper' : ''}`}>
+      {deleteAsk && (
+        <div className="qc-ask" role="dialog" aria-modal="true">
+          <div className="qc-ask__box">
+            {deleteAsk === 'scope' ? (
+              <>
+                <p className="qc-ask__q">What should go?</p>
+                <button
+                  type="button"
+                  className="qc-ask__opt"
+                  onClick={() => setDeleteAsk('page')}
+                >
+                  <TrashIcon size={16} />
+                  <span>
+                    <span className="qc-ask__opt-t">Delete this page</span>
+                    <span className="qc-ask__opt-s">
+                      Empties the paper on screen. The others stay.
+                    </span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="qc-ask__opt qc-ask__opt--all"
+                  onClick={() => setDeleteAsk('all')}
+                >
+                  <AlertIcon size={16} />
+                  <span>
+                    <span className="qc-ask__opt-t">Delete everything</span>
+                    <span className="qc-ask__opt-s">
+                      Every paper, the heading and the layout, back to a blank desk.
+                    </span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--sm btn--ghost"
+                  onClick={() => setDeleteAsk(null)}
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="qc-ask__q">
+                  {deleteAsk === 'all'
+                    ? 'Delete every question paper?'
+                    : 'Delete this question paper?'}
+                </p>
+                <p className="qc-ask__note">
+                  {deleteAsk === 'all'
+                    ? `${items.length} paper${items.length === 1 ? '' : 's'}, the heading and the layout go. This cannot be undone.`
+                    : 'The questions on this page go. This cannot be undone.'}
+                </p>
+                <div className="qc-ask__row">
+                  <button
+                    type="button"
+                    className="btn btn--sm btn--ghost"
+                    onClick={() => setDeleteAsk('scope')}
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--sm qc-ask__go"
+                    onClick={() => {
+                      if (deleteAsk === 'all') onReset()
+                      else handleResetActivePaper()
+                      setDeleteAsk(null)
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ── TOP PREVIEW SECTION (Center Screen) ─────────────────────────── */}
       <div className="flutter-preview-pane">
         {/* Review / Table Editor Toggle Bar */}
@@ -435,7 +583,9 @@ export function FlutterLayout({
           <div className="flutter-preview-bar__left">
             {/* View Mode Segmented Switch (Live Review vs Edit Table) */}
             {/* Both shapes on show, so which one you are on is visible rather
-                than something you deduce from a single icon. */}
+                than deduced from one icon. Sheet shape is a review decision, so
+                it stays out of the editor. */}
+            {!editing && (
             <div className="flutter-segmented flutter-segmented--sm qc-sheet-toggle">
               <button
                 type="button"
@@ -456,22 +606,22 @@ export function FlutterLayout({
                 <SplitPageIcon size={15} />
               </button>
             </div>
+            )}
           </div>
 
           <div className="flutter-preview-bar__actions">
-            {/* Everything back to an empty desk — asked for first, because it
-                cannot be undone once the stored workspace is gone. */}
+            {!editing && (
             <button
               type="button"
               className="flutter-icon-btn flutter-icon-btn--danger"
-              onClick={() => {
-                if (window.confirm('Clear every paper and start again?')) onReset()
-              }}
-              title="Reset all"
-              aria-label="Reset all"
+              onClick={() => setDeleteAsk('scope')}
+              disabled={!canDelete}
+              title={canDelete ? 'Delete' : 'Nothing to delete yet'}
+              aria-label="Delete"
             >
               <TrashIcon size={15} />
             </button>
+            )}
 
             <button
               type="button"
@@ -505,462 +655,26 @@ export function FlutterLayout({
               <SlidersIcon size={15} />
             </button>
 
-            {/* Reset Button (Resets ONLY current active question paper) */}
-            <button
-              type="button"
-              className="flutter-icon-btn"
-              onClick={handleResetActivePaper}
-              title="Reset this Question Paper"
-              aria-label="Reset this Question Paper"
-            >
-              <RotateCcwIcon size={15} />
-            </button>
-
             {/* Item 1 / 2 Pager */}
 
           </div>
         </div>
 
         {/* Center Area: Either Live Review Preview OR Inline Table Editor */}
-        {/* Whichever view you are not in is one tap away, and the button says
-            which one that is rather than making you remember. */}
-        {activePaper && !panelOpen && (
-          <button
-            type="button"
-            className="qc-fab"
-            onClick={() => setCenterView(centerView === 'table' ? 'preview' : 'table')}
-          >
-            {centerView === 'table' ? <TextIcon size={16} /> : <PencilIcon size={16} />}
-            <span>{centerView === 'table' ? 'Review' : 'Edit table'}</span>
-          </button>
-        )}
-
-        {/* Columns and numbering shape the printed paper, so they belong to
-            both the sheet and the table editor rather than one of them. */}
-          {/* One chip per paper, named by its subject, and a + for the next
-              one. Tapping a chip shows what was put into that paper. */}
-          <div className="qc-papers">
-            {items.map((item, idx) => {
-              // Only a real subject earns a label. "Item 3" is the number
-              // already on the chip, spelled out twice.
-              const name = item.paper?.header.courseTitle || item.tokens?.courseTitle || ''
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`qc-paper ${item.id === activeItemId ? 'qc-paper--active' : ''}${
-                    name ? '' : ' qc-paper--bare'
-                  }`}
-                  onClick={() => onSelectActiveItem(item.id)}
-                  title={name || `Paper ${idx + 1}`}
-                >
-                  <span className="qc-paper__n">{idx + 1}</span>
-                  {name && <span className="qc-paper__name">{name}</span>}
-                </button>
-              )
-            })}
-
-            <button
-              type="button"
-              className="qc-paper qc-paper--add"
-              onClick={onAddItem}
-              disabled={!canAddPaper}
-              title={
-                canAddPaper
-                  ? 'Start another question paper'
-                  : 'Fill in this paper before starting the next one'
-              }
-              aria-label="Start another question paper"
-            >
-              <PlusIcon size={15} />
-            </button>
-          </div>
-
-          {cutOff && (
-            <div className="qc-cut-warning" role="status">
-              <AlertIcon size={15} />
-              <span>
-                Part of this paper runs past the bottom of the page and will not
-                print. Reduce the question text size, the row padding or the page
-                margins.
-              </span>
-            </div>
-          )}
-
-          {showReviewSettings && (
-            <div
-              className="clean-settings-panel"
-              style={{
-                position: 'absolute',
-                // Clears the 45px toolbar above it, so the Review / Edit Table
-                // switch stays reachable while the panel is open.
-                top: 55,
-                left: 14,
-                right: 14,
-                zIndex: 30,
-                maxWidth: 680,
-                margin: '0 auto',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-              }}
-            >
+          {/* Opens where the tools are, over the sheet — the same shape as
+              the columns panel, so the paper stays in view while it changes. */}
+          {layoutGroup !== null && (
+            <div className="qc-tool-panel">
               <button
                 type="button"
                 className="clean-settings-close"
-                onClick={() => setShowReviewSettings(false)}
-                aria-label="Close settings"
+                onClick={() => setLayoutGroup(null)}
+                aria-label="Close"
               >
                 <XIcon size={15} />
               </button>
-              <div className="clean-settings-grid">
-                <div className="clean-settings-group">
-                  <span className="clean-settings-group-label">Columns beside each question</span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {(['marks', 'level', 'co', 'po'] as const).map((col) => {
-                      const active = activeTokens.metaColumns.includes(col)
-                      return (
-                        <button
-                          key={col}
-                          type="button"
-                          className={`clean-action-chip ${active ? 'clean-action-chip--active' : ''}`}
-                          onClick={() => {
-                            const next = active
-                              ? activeTokens.metaColumns.filter((c) => c !== col)
-                              : [...activeTokens.metaColumns, col]
-                            patchActiveTokens({ metaColumns: next })
-                          }}
-                        >
-                          {active ? <CheckIcon size={12} /> : <PlusIcon size={12} />}
-                          <span>{col.toUpperCase()}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-                <div className="clean-settings-group">
-                  <span className="clean-settings-group-label">Numbering</span>
-                  <label className="flutter-checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(activeTokens.renumberPerPart)}
-                      onChange={(e) => patchActiveTokens({ renumberPerPart: e.target.checked })}
-                    />
-                    <span>Restart numbering in each part</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          )}
-
-        {centerView === 'table' ? (
-          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', width: '100%' }}>
-            {activeItem && activeItem.paper ? (
-              <InlineTableEditor
-                paper={activeItem.paper}
-                tokens={activeTokens}
-                isSecondPaper={currentIdx > 0}
-                itemsCount={items.length}
-                activeItemIndex={currentIdx}
-                onAddQuestionPaper={() => {
-                  onAddItem()
-                  onLayout('split')
-                  onMirrorHalves(false)
-                }}
-                onSwitchQuestionPaper={(idx) => {
-                  if (items[idx]) onSelectActiveItem(items[idx].id)
-                }}
-                onDeleteQuestionPaper={(idx) => {
-                  if (items[idx]) onDeleteItem(items[idx].id)
-                }}
-                onUploadFile={() => {
-                  setActiveTab('content')
-                  setPanelOpen(true)
-                }}
-                onPasteText={() => {
-                  setActiveTab('content')
-                  setPanelOpen(true)
-                }}
-                onChange={(updated) => {
-                  onSavePaper?.(activeItem.id, updated, activeItem.rawText)
-                }}
-                onTokens={(patch) => patchActiveTokens(patch)}
-              />
-            ) : (
-              <div className="qc-intake">{renderIntake()}</div>
-            )}
-          </div>
-        ) : (
-          /* Live Review Mode (A4 Sheet Preview) */
-          <div
-            className="flutter-canvas"
-            ref={previewBoxRef}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-          >
-            {/* A paper with nothing in it shows the way to put something in it,
-                whatever the other papers already hold. */}
-            {activeItem && !activeItem.paper ? (
-              <div className="qc-intake">{renderIntake()}</div>
-            ) : sheets.length > 0 ? (
-              <div
-                ref={sheetWrapRef}
-                className="flutter-sheet-wrapper"
-                style={{
-                  transform: `scale(${scale})`,
-                  transformOrigin: 'center center',
-                  width: 794,
-                  height: 1123,
-                }}
-              >
-                {/* The CSS variables that size the headings ride on the sheet
-                    element, so they must come from the paper on screen —
-                    reading the master's copy is why the header font sliders
-                    appeared to do nothing. */}
-                {sheets.map((sheet, index) => (
-                  <article
-                    key={index}
-                    className={`sheet ${sheet.kind === 'split' ? 'sheet--split' : ''} ${
-                      swipeDir ? `flutter-paper--swipe-${swipeDir}` : ''
-                    }`}
-                    style={sheetStyle(activeTokens)}
-                  >
-                    {sheet.kind === 'single' ? (
-                      <PaperBody
-                        paper={activePaper ?? sheet.item.paper!}
-                        tokens={activeTokens}
-                      />
-                    ) : (
-                      <>
-                        <div className="sheet__half sheet__half--top">
-                          <PaperBody
-                            paper={sheet.top.paper!}
-                            tokens={activeTokens}
-                          />
-                        </div>
-                        {activeTokens.showCutLine && <div className="sheet__cut" aria-hidden="true" />}
-                        <div className="sheet__half sheet__half--bottom">
-                          {sheet.bottom && (
-                            <PaperBody
-                              paper={sheet.bottom.paper!}
-                              tokens={{ ...activeTokens, ...(sheet.bottom.tokens ?? {}) }}
-                            />
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <div className="qc-intake">{renderIntake()}</div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* ── BACKDROP ON MOBILE WHEN PANEL IS OPEN ─────────────────────── */}
-      {panelOpen && (
-        <div
-          className="flutter-backdrop"
-          onClick={() => setPanelOpen(false)}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* ── BOTTOM TOOL PANEL (Sliding Up On Tab Selection) ─────────────── */}
-      {(
-        <section className={`flutter-tools-pane ${panelOpen ? 'flutter-tools-pane--open' : ''}`}>
-          {/* Mobile Sheet Header */}
-          <div className="flutter-sheet-header">
-            <span className="flutter-sheet-title">
-              {activeTab === 'master' && <><StyleIcon size={15} /> Master &amp; Headings</>}
-              {activeTab === 'content' && <><ClipboardIcon size={15} /> Question Content</>}
-              {activeTab === 'layout' && <><LayoutIcon size={15} /> Sheet Layout &amp; Styling</>}
-              {activeTab === 'output' && <><PrinterIcon size={15} /> Export &amp; Download</>}
-            </span>
-            <button
-              type="button"
-              className="icon-btn flutter-sheet-close"
-              onClick={() => setPanelOpen(false)}
-              aria-label="Close tools sheet"
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Tab Views Content */}
-          <div className="flutter-tab-content">
-            {/* ── TAB 1: MASTER SETTINGS ───────────────────────────────── */}
-            {activeTab === 'master' && (
-              <div className="flutter-tab-body">
-                <div className="flutter-card">
-                  <div className="flutter-card__head">
-                    <span className="flutter-card__title"><BankIcon size={15} /> Institution &amp; Department Header</span>
-                  </div>
-
-                  <div className="flutter-tab-form">
-                    <label className="flutter-field">
-                      <span className="flutter-field__label">Institution Name</span>
-                      {/* Remembered on blur, not on every keystroke, so a
-                          half-typed name never reaches the suggestions. */}
-                      <input
-                        className="flutter-input"
-                        type="text"
-                        list="qpf-institutions"
-                        value={activeTokens.institution}
-                        onChange={(e) => patchMasterTokens({ institution: e.target.value })}
-                        onBlur={(e) => {
-                          remember('institution', e.target.value)
-                          setKnownInstitutions(remembered('institution'))
-                        }}
-                        placeholder="e.g. MANONMANIAM SUNDARANAR UNIVERSITY"
-                      />
-                      <datalist id="qpf-institutions">
-                        {knownInstitutions.map((name) => (
-                          <option key={name} value={name} />
-                        ))}
-                      </datalist>
-                    </label>
-
-                    <label className="flutter-field">
-                      <span className="flutter-field__label">Department / School</span>
-                      <input
-                        className="flutter-input"
-                        type="text"
-                        value={activeTokens.department}
-                        onChange={(e) => patchMasterTokens({ department: e.target.value })}
-                        placeholder="e.g. Department of Chemistry"
-                      />
-                    </label>
-
-                    <label className="flutter-field">
-                      <span className="flutter-field__label">Examination Title</span>
-                      <input
-                        className="flutter-input"
-                        type="text"
-                        value={activeTokens.examTitle}
-                        onChange={(e) => patchMasterTokens({ examTitle: e.target.value })}
-                        placeholder="e.g. I-INTERNAL EXAMINATION"
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                <div className="flutter-card">
-                  <div className="flutter-card__head">
-                    <span className="flutter-card__title"><ClipboardIcon size={15} /> Examination Defaults</span>
-                  </div>
-
-                  <div className="flutter-grid-2">
-                    <label className="flutter-field">
-                      <span className="flutter-field__label">Duration (Hours)</span>
-                      <input
-                        className="flutter-input"
-                        type="text"
-                        value={activeTokens.duration}
-                        onChange={(e) => patchMasterTokens({ duration: e.target.value })}
-                        placeholder="e.g. 1 1/2 Hours"
-                      />
-                    </label>
-
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ── TAB 2: QUESTION CONTENT ──────────────────────────────── */}
-            {activeTab === 'content' && (
-              <div className="flutter-tab-body">
-                <div className="flutter-card">
-                  <div className="flutter-card__head">
-                    <span className="flutter-card__title">
-                      <TextIcon size={15} /> Question Papers ({items.length})
-                    </span>
-                    <span className="flutter-card__sub">
-                      Upload PDF/Word documents or paste text directly.
-                    </span>
-                  </div>
-
-                  <div className="flutter-item-list">
-                    {items.map((item, idx) => (
-                      <div
-                        key={item.id}
-                        className={`flutter-item-tile ${item.id === activeItemId ? 'flutter-item-tile--active' : ''}`}
-                        onClick={() => onSelectActiveItem(item.id)}
-                      >
-                        <div className="flutter-item-tile__info">
-                          <span className="flutter-item-tile__num">{idx + 1}</span>
-                          <div className="flutter-item-tile__text">
-                            <span className="flutter-item-tile__title">
-                              {item.paper?.header.courseTitle ||
-                                item.tokens?.courseTitle ||
-                                `Paper ${idx + 1}`}
-                            </span>
-                            <span className="flutter-item-tile__meta">
-                              {item.paper
-                                ? `${item.paper.parts.reduce((n, p) => n + p.questions.length, 0)} Questions · ${item.paper.totalMarks} Marks`
-                                : 'No questions parsed yet'}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flutter-item-tile__actions">
-                          {items.length > 1 && (
-                            <button
-                              type="button"
-                              className="icon-btn"
-                              style={{ color: '#ef4444' }}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onDeleteItem(item.id)
-                              }}
-                              title="Delete Question Paper"
-                            >
-                              ✕
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {renderIntake()}
-
-                  {activePaper && (
-                    <div className="flutter-summary-banner">
-                      <span><CheckIcon size={14} /> {activePaper.parts.reduce((n, p) => n + p.questions.length, 0)} Questions</span>
-                      <span>· {activePaper.parts.length} Parts</span>
-                      <span>· {activePaper.totalMarks} Total Marks</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Sits under everything: the next paper is a separate job, not
-                    another way of filling in this one. */}
-                <button
-                  type="button"
-                  className="qc-next"
-                  onClick={onAddItem}
-                  disabled={!canAddPaper}
-                  title={
-                    canAddPaper
-                      ? undefined
-                      : 'Fill in this paper before starting the next one'
-                  }
-                >
-                  <PlusIcon size={16} />
-                  <span>
-                    {canAddPaper
-                      ? 'Create next question paper'
-                      : 'Fill in this paper first'}
-                  </span>
-                </button>
-              </div>
-            )}
-
-            {/* ── TAB 3: LAYOUT, TYPOGRAPHY & ADVANCED ACCORDIONS ───────── */}
-            {activeTab === 'layout' && (
-              <div className="flutter-tab-body">
                 {/* ── ACCORDION 1: Sheet Layout & Splitting ── */}
+                {layoutGroup === 'sheet' && (
                 <div className="flutter-card clean-accordion-card" style={{ marginBottom: 10 }}>
                   <button
                     type="button"
@@ -1011,8 +725,10 @@ export function FlutterLayout({
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* ── ACCORDION 2: Typography & Individual Font Sizes ── */}
+                {layoutGroup === 'type' && (
                 <div className="flutter-card clean-accordion-card" style={{ marginBottom: 10 }}>
                   <button
                     type="button"
@@ -1083,7 +799,7 @@ export function FlutterLayout({
                             max={1.6}
                             step={0.05}
                             value={activeTokens.headingScale}
-                            onChange={(e) => patchActiveTokens({ headingScale: Number(e.target.value) })}
+                            onChange={(e) => patchMasterTokens({ headingScale: Number(e.target.value) })}
                             style={{ width: '100%', accentColor: '#4f46e5' }}
                           />
                         </label>
@@ -1100,7 +816,7 @@ export function FlutterLayout({
                             step={0.05}
                             value={activeTokens.institutionType?.size ?? 1.25}
                             onChange={(e) =>
-                              patchActiveTokens({
+                              patchMasterTokens({
                                 institutionType: {
                                   ...activeTokens.institutionType,
                                   size: Number(e.target.value),
@@ -1122,7 +838,7 @@ export function FlutterLayout({
                             step={0.05}
                             value={activeTokens.partType?.size ?? 1}
                             onChange={(e) =>
-                              patchActiveTokens({
+                              patchMasterTokens({
                                 partType: {
                                   ...activeTokens.partType,
                                   size: Number(e.target.value),
@@ -1144,7 +860,7 @@ export function FlutterLayout({
                             step={0.05}
                             value={activeTokens.instructionType?.size ?? 1}
                             onChange={(e) =>
-                              patchActiveTokens({
+                              patchMasterTokens({
                                 instructionType: {
                                   ...activeTokens.instructionType,
                                   size: Number(e.target.value),
@@ -1158,8 +874,10 @@ export function FlutterLayout({
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* ── ACCORDION 3: Header & Title Elements ── */}
+                {layoutGroup === 'heading' && (
                 <div className="flutter-card clean-accordion-card" style={{ marginBottom: 10 }}>
                   <button
                     type="button"
@@ -1271,8 +989,10 @@ export function FlutterLayout({
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* ── ACCORDION 4: Table Grid, Borders & Padding ── */}
+                {layoutGroup === 'table' && (
                 <div className="flutter-card clean-accordion-card" style={{ marginBottom: 10 }}>
                   <button
                     type="button"
@@ -1497,8 +1217,10 @@ export function FlutterLayout({
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* ── ACCORDION 5: Page Footer ── */}
+                {layoutGroup === 'sheet' && (
                 <div className="flutter-card clean-accordion-card" style={{ marginBottom: 10 }}>
                   <button
                     type="button"
@@ -1525,11 +1247,394 @@ export function FlutterLayout({
                     </div>
                   )}
                 </div>
+                )}
+            </div>
+          )}
+
+          {cutOff && (
+            <div className="qc-cut-warning" role="status">
+              <AlertIcon size={15} />
+              <span>
+                Part of this paper runs past the bottom of the page and will not
+                print. Reduce the question text size, the row padding or the page
+                margins.
+              </span>
+            </div>
+          )}
+
+          {showReviewSettings && (
+            <div
+              className="clean-settings-panel"
+              style={{
+                position: 'absolute',
+                // Clears the 45px toolbar above it, so the Review / Edit Table
+                // switch stays reachable while the panel is open.
+                top: 55,
+                left: 14,
+                right: 14,
+                zIndex: 30,
+                maxWidth: 680,
+                margin: '0 auto',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+              }}
+            >
+              <button
+                type="button"
+                className="clean-settings-close"
+                onClick={() => setShowReviewSettings(false)}
+                aria-label="Close settings"
+              >
+                <XIcon size={15} />
+              </button>
+              <div className="clean-settings-grid">
+                <div className="clean-settings-group">
+                  <span className="clean-settings-group-label">Columns beside each question</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {(['marks', 'level', 'co', 'po'] as const).map((col) => {
+                      const active = activeTokens.metaColumns.includes(col)
+                      return (
+                        <button
+                          key={col}
+                          type="button"
+                          className={`clean-action-chip ${active ? 'clean-action-chip--active' : ''}`}
+                          onClick={() => {
+                            const next = active
+                              ? activeTokens.metaColumns.filter((c) => c !== col)
+                              : [...activeTokens.metaColumns, col]
+                            patchActiveTokens({ metaColumns: next })
+                          }}
+                        >
+                          {active ? <CheckIcon size={12} /> : <PlusIcon size={12} />}
+                          <span>{col.toUpperCase()}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+                <div className="clean-settings-group">
+                  <span className="clean-settings-group-label">Numbering</span>
+                  <label className="flutter-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(activeTokens.renumberPerPart)}
+                      onChange={(e) => patchActiveTokens({ renumberPerPart: e.target.checked })}
+                    />
+                    <span>Restart numbering in each part</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+
+        {/* Review screen only: the sheet tools as icons, so the page itself
+            keeps the room and each group opens only when asked for. */}
+        {/* The row stays put while a group is open, so one tool is one tap
+            from the next instead of a close-then-open. */}
+        {stage === 'review' && activePaper && (!panelOpen || layoutGroup !== null) && (
+          <div className="qc-tools">
+            {([
+              ['sheet', 'Sheet layout & split halves', <SplitPageIcon key="s" size={17} />],
+              ['type', 'Typography & font sizes', <TypeIcon key="t" size={17} />],
+              ['heading', 'Header & title elements', <BankIcon key="h" size={17} />],
+              ['table', 'Table grid, borders & padding', <GridIcon key="g" size={17} />],
+            ] as const).map(([key, label, icon]) => (
+              <button
+                key={key}
+                type="button"
+                className={`qc-tool ${layoutGroup === key ? 'qc-tool--active' : ''}`}
+                onClick={() => setLayoutGroup(layoutGroup === key ? null : key)}
+                title={label}
+                aria-label={label}
+              >
+                {icon}
+              </button>
+            ))}
+          </div>
+        )}
+
+
+
+
+        {centerView === 'table' ? (
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', width: '100%' }}>
+            {activeItem && activeItem.paper ? (
+              <InlineTableEditor
+                paper={activeItem.paper}
+                tokens={activeTokens}
+                isSecondPaper={currentIdx > 0}
+                itemsCount={items.length}
+                activeItemIndex={currentIdx}
+                onAddQuestionPaper={() => {
+                  onAddItem()
+                  onLayout('split')
+                  onMirrorHalves(false)
+                }}
+                onSwitchQuestionPaper={(idx) => {
+                  if (items[idx]) onSelectActiveItem(items[idx].id)
+                }}
+                onDeleteQuestionPaper={(idx) => {
+                  if (items[idx]) onDeleteItem(items[idx].id)
+                }}
+                onUploadFile={() => {
+                  setActiveTab('content')
+                  setPanelOpen(true)
+                }}
+                onPasteText={() => {
+                  setActiveTab('content')
+                  setPanelOpen(true)
+                }}
+                onChange={(updated) => {
+                  onSavePaper?.(activeItem.id, updated, activeItem.rawText)
+                }}
+                onTokens={(patch) => patchActiveTokens(patch)}
+              />
+            ) : (
+              !panelOpen && <div className="qc-intake">{renderContent()}</div>
+            )}
+          </div>
+        ) : (
+          /* Live Review Mode (A4 Sheet Preview) */
+          <div
+            className="flutter-canvas"
+            ref={previewBoxRef}
+          >
+            {/* A paper with nothing in it shows the way to put something in it,
+                whatever the other papers already hold. */}
+            {activeItem && !activeItem.paper ? (
+              !panelOpen && <div className="qc-intake">{renderContent()}</div>
+            ) : sheets.length > 0 ? (
+              <div
+                ref={sheetWrapRef}
+                className="flutter-sheet-wrapper"
+                style={{
+                  transform: `scale(${scale})`,
+                  // A transform does not change the layout box, so the sheet
+                  // would still reserve its full 794x1123 and leave the shrunk
+                  // page floating in a field of white. Scaling from the top and
+                  // pulling the leftover height back gives it the size it looks.
+                  transformOrigin: 'top center',
+                  width: 794,
+                  height: sheetsHeight,
+                  marginBottom: -(sheetsHeight * (1 - scale)),
+                }}
+              >
+                {/* The CSS variables that size the headings ride on the sheet
+                    element, so they must come from the paper on screen —
+                    reading the master's copy is why the header font sliders
+                    appeared to do nothing. */}
+                {visibleSheets.map((sheet, index) => (
+                  <article
+                    key={index}
+                    className={`sheet ${sheet.kind === 'split' ? 'sheet--split' : ''}`}
+                    style={sheetStyle(activeTokens)}
+                  >
+                    {sheet.kind === 'single' ? (
+                      <PaperBody
+                        paper={activePaper ?? sheet.item.paper!}
+                        tokens={activeTokens}
+                      />
+                    ) : (
+                      <>
+                        <div className="sheet__half sheet__half--top">
+                          <PaperBody
+                            paper={sheet.top.paper!}
+                            tokens={activeTokens}
+                          />
+                        </div>
+                        {activeTokens.showCutLine && <div className="sheet__cut" aria-hidden="true" />}
+                        <div className="sheet__half sheet__half--bottom">
+                          {sheet.bottom && (
+                            <PaperBody
+                              paper={sheet.bottom.paper!}
+                              tokens={{ ...activeTokens, ...(sheet.bottom.tokens ?? {}) }}
+                            />
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </article>
+                ))}
+              </div>
+            ) : (
+              !panelOpen && <div className="qc-intake">{renderContent()}</div>
+            )}
+          </div>
+        )}
+        {activePaper && !panelOpen && (
+          <div className="qc-stage">
+            {stage === 'edit' ? (
+              <>
+                <button
+                  type="button"
+                  className="btn btn--sm btn--ghost"
+                  onClick={() => {
+                    setActiveTab('content')
+                    setPanelOpen(true)
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--sm btn--primary"
+                  onClick={() => {
+                    setStage('review')
+                    setCenterView('preview')
+                  }}
+                >
+                  Approve &amp; preview
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="btn btn--sm btn--ghost"
+                  onClick={() => {
+                    setLayoutGroup(null)
+                    setStage('edit')
+                    setCenterView('table')
+                  }}
+                >
+                  Edit question paper
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--sm btn--primary"
+                  onClick={() => {
+                    if (activeItem) onApprove(activeItem.id)
+                    setLayoutGroup(null)
+                    setActiveTab('export')
+                    setPanelOpen(true)
+                  }}
+                >
+                  Done &amp; save
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── BACKDROP ON MOBILE WHEN PANEL IS OPEN ─────────────────────── */}
+      {panelOpen && (
+        <div
+          className="flutter-backdrop"
+          onClick={() => {
+                setPanelOpen(false)
+                setLayoutGroup(null)
+              }}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* ── BOTTOM TOOL PANEL (Sliding Up On Tab Selection) ─────────────── */}
+      {/* Header and Content are where the work is typed, so they take the whole
+          screen. The sheet tools stay a sheet: they are adjustments you make
+          while watching the paper behind them. */}
+      {(
+        <section
+          className={`flutter-tools-pane ${panelOpen ? 'flutter-tools-pane--open' : ''} ${
+            panelOpen && layoutGroup === null && (activeTab === 'header' || activeTab === 'content')
+              ? 'flutter-tools-pane--full'
+              : ''
+          }`}
+        >
+          {/* Mobile Sheet Header */}
+          <div className="flutter-sheet-header">
+            <span className="flutter-sheet-title">
+              {activeTab === 'header' && <><BankIcon size={15} /> Paper Header</>}
+              {activeTab === 'content' && <><ClipboardIcon size={15} /> Question Content</>}
+              {activeTab === 'export' && <><PrinterIcon size={15} /> Export &amp; Download</>}
+            </span>
+            <button
+              type="button"
+              className="icon-btn flutter-sheet-close"
+              onClick={() => {
+                setPanelOpen(false)
+                setLayoutGroup(null)
+              }}
+              aria-label="Close tools sheet"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Tab Views Content */}
+          <div className="flutter-tab-content">
+            {/* ── TAB 1: MASTER SETTINGS ───────────────────────────────── */}
+            {activeTab === 'header' && (
+              <div className="flutter-tab-body">
+                <div className="flutter-card">
+                  <div className="flutter-card__head">
+                    <span className="flutter-card__title"><BankIcon size={15} /> Institution &amp; Department Header</span>
+                  </div>
+
+                  <div className="flutter-tab-form">
+                    <label className="flutter-field">
+                      <span className="flutter-field__label">Institution Name</span>
+                      {/* Remembered on blur, not on every keystroke, so a
+                          half-typed name never reaches the suggestions. */}
+                      <input
+                        className="flutter-input"
+                        type="text"
+                        list="qpf-institutions"
+                        value={activeTokens.institution}
+                        onChange={(e) => patchMasterTokens({ institution: e.target.value })}
+                        onBlur={(e) => {
+                          remember('institution', e.target.value)
+                          setKnownInstitutions(remembered('institution'))
+                        }}
+                        placeholder="e.g. MANONMANIAM SUNDARANAR UNIVERSITY"
+                      />
+                      <datalist id="qpf-institutions">
+                        {knownInstitutions.map((name) => (
+                          <option key={name} value={name} />
+                        ))}
+                      </datalist>
+                    </label>
+
+                    <label className="flutter-field">
+                      <span className="flutter-field__label">Department / School</span>
+                      <input
+                        className="flutter-input"
+                        type="text"
+                        value={activeTokens.department}
+                        onChange={(e) => patchMasterTokens({ department: e.target.value })}
+                        placeholder="e.g. Department of Chemistry"
+                      />
+                    </label>
+
+                    <label className="flutter-field">
+                      <span className="flutter-field__label">Examination Title</span>
+                      <input
+                        className="flutter-input"
+                        type="text"
+                        value={activeTokens.examTitle}
+                        onChange={(e) => patchMasterTokens({ examTitle: e.target.value })}
+                        placeholder="e.g. I-INTERNAL EXAMINATION"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flutter-card">
+                  <div className="flutter-card__head">
+                    <span className="flutter-card__title"><ClipboardIcon size={15} /> Examination Defaults</span>
+                  </div>
+
+                  <div className="flutter-grid-2">
+
+                  </div>
+                </div>
               </div>
             )}
 
+            {/* ── TAB 2: QUESTION CONTENT ──────────────────────────────── */}
+            {activeTab === 'content' && renderContent()}
+
             {/* ── TAB 4: OUTPUT & EXPORT (Clean list & ZIP / PDF Download) ── */}
-            {activeTab === 'output' && (
+            {activeTab === 'export' && (
               <div className="flutter-tab-body">
                 <div className="flutter-card">
                   <div className="flutter-card__head">
@@ -1650,11 +1755,11 @@ export function FlutterLayout({
         <nav className="flutter-tabs" aria-label="Tool Navigation">
           <button
             type="button"
-            className={`flutter-tab ${activeTab === 'master' && panelOpen ? 'flutter-tab--active' : ''}`}
-            onClick={() => handleTabClick('master')}
+            className={`flutter-tab ${activeTab === 'header' && panelOpen ? 'flutter-tab--active' : ''}`}
+            onClick={() => handleTabClick('header')}
           >
-            <StyleIcon size={18} />
-            <span>Master</span>
+            <BankIcon size={18} />
+            <span>Header</span>
           </button>
 
           <button
@@ -1668,20 +1773,11 @@ export function FlutterLayout({
 
           <button
             type="button"
-            className={`flutter-tab ${activeTab === 'layout' && panelOpen ? 'flutter-tab--active' : ''}`}
-            onClick={() => handleTabClick('layout')}
-          >
-            <SplitPageIcon size={18} />
-            <span>Layout</span>
-          </button>
-
-          <button
-            type="button"
-            className={`flutter-tab ${activeTab === 'output' && panelOpen ? 'flutter-tab--active' : ''}`}
-            onClick={() => handleTabClick('output')}
+            className={`flutter-tab ${activeTab === 'export' && panelOpen ? 'flutter-tab--active' : ''}`}
+            onClick={() => handleTabClick('export')}
           >
             <DownloadIcon size={18} />
-            <span>Output</span>
+            <span>Export</span>
           </button>
         </nav>
       )}
