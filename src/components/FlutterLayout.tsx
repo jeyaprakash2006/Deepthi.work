@@ -13,8 +13,9 @@ import type {
   StyleTokens,
 } from '../types'
 import { PaperBody, sheetStyle } from './sheet/PaperBody'
-import { parseRawText } from '../lib/parser'
+import { parseRawText, recomputeTotal } from '../lib/parser'
 import { InlineTableEditor } from './InlineTableEditor'
+import { extractFile } from '../lib/extract'
 import { uid } from '../lib/id'
 import { remember, remembered } from '../lib/suggest'
 import {
@@ -46,14 +47,12 @@ interface Props {
   items: Item[]
   activeItemId: string | null
   layout: SheetLayout
-  mirrorHalves: boolean
   sheets: Sheet[]
   fits: Record<number, number>
   busy: string | null
   onTokens: (patch: Partial<StyleTokens>, itemId?: string | null) => void
   onTokensAll: (patch: Partial<StyleTokens>) => void
   onLayout: (layout: SheetLayout) => void
-  onMirrorHalves: (mirror: boolean) => void
   onSelectActiveItem: (id: string | null) => void
   onOpenValidator: (itemId: string) => void
   onUploadFile: (itemId: string, file: File) => void
@@ -80,14 +79,12 @@ export function FlutterLayout({
   items,
   activeItemId,
   layout,
-  mirrorHalves: _mirrorHalves,
   sheets,
   fits: _fits,
   busy,
   onTokens,
   onTokensAll,
   onLayout,
-  onMirrorHalves,
   onSelectActiveItem,
   onOpenValidator: _onOpenValidator,
   onUploadFile,
@@ -166,6 +163,11 @@ export function FlutterLayout({
 
   /** Which group of sheet tools the review screen has opened, if any. */
   const [layoutGroup, setLayoutGroup] = useState<null | 'sheet' | 'type' | 'heading' | 'table'>(null)
+
+  /** A paper read off a photo, and which pieces of it to keep. */
+  const [formatBusy, setFormatBusy] = useState('')
+  const [formatPaper, setFormatPaper] = useState<ParsedPaper | null>(null)
+  const [formatPick, setFormatPick] = useState<Set<string>>(new Set())
 
   /** Edit the table, approve it, then review the sheet before saving. */
   const [stage, setStage] = useState<'edit' | 'review'>('edit')
@@ -325,6 +327,54 @@ export function FlutterLayout({
   // reached from the Content tab or found waiting on an empty desk.
   // The two ways forward ride with the content: after it when the paper is
   // short, stuck to the foot of the screen once it is long enough to scroll.
+  /**
+   * Takes the ticked pieces into the workspace: the heading becomes the shared
+   * header, and each ticked part is appended to the first question paper.
+   */
+  const applyFormat = () => {
+    if (!formatPaper) return
+    const first = items[0]
+
+    if (formatPick.has('header')) {
+      const h = formatPaper.header
+      const patch: Partial<StyleTokens> = {}
+      if (h.institution) patch.institution = h.institution
+      if (h.department) patch.department = h.department
+      if (h.examTitle) patch.examTitle = h.examTitle
+      if (h.degree) patch.degree = h.degree
+      if (h.semester) patch.semester = h.semester
+      if (h.duration) patch.duration = h.duration
+      if (Object.keys(patch).length) patchMasterTokens(patch)
+    }
+
+    const chosen = formatPaper.parts.filter((part) => formatPick.has(part.id))
+    if (chosen.length && first) {
+      const base = first.paper ?? {
+        header: {},
+        parts: [],
+        totalMarks: 0,
+        warnings: [],
+      }
+      // Fresh ids, so a part added twice does not collide with itself.
+      const added = chosen.map((part) => ({
+        ...part,
+        id: uid('part'),
+        questions: part.questions.map((q) => ({ ...q, id: uid('q') })),
+      }))
+      const merged: ParsedPaper = {
+        ...base,
+        parts: [...base.parts, ...added],
+      }
+      merged.totalMarks = recomputeTotal(merged)
+      onSavePaper?.(first.id, merged, first.rawText)
+      onSelectActiveItem(first.id)
+    }
+
+    setFormatPaper(null)
+    setFormatPick(new Set())
+    setActiveTab('content')
+  }
+
   const renderContent = () => (
               <div className="flutter-tab-body">
                 <div className="flutter-card">
@@ -375,6 +425,25 @@ export function FlutterLayout({
                               }}
                             >
                               Parse &amp; Format
+                            </button>
+                          )}
+
+                          {/* Once a paper has been approved there is a sheet
+                              worth looking at, so the row offers it directly. */}
+                          {item.paper && item.approvedAt && (
+                            <button
+                              type="button"
+                              className="btn btn--sm btn--ghost qc-row-view"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onSelectActiveItem(item.id)
+                                setPanelOpen(false)
+                                setLayoutGroup(null)
+                                setStage('review')
+                                setCenterView('preview')
+                              }}
+                            >
+                              View
                             </button>
                           )}
                           {items.length > 1 && (
@@ -704,7 +773,6 @@ export function FlutterLayout({
                           className={`flutter-seg-btn ${layout === 'split' ? 'flutter-seg-btn--active' : ''}`}
                           onClick={() => {
                             onLayout('split')
-                            onMirrorHalves(true)
                           }}
                         >
                           <SplitPageIcon size={16} />
@@ -718,7 +786,7 @@ export function FlutterLayout({
                         <input
                           type="checkbox"
                           checked={activeTokens.showCutLine}
-                          onChange={(e) => patchActiveTokens({ showCutLine: e.target.checked })}
+                          onChange={(e) => patchMasterTokens({ showCutLine: e.target.checked })}
                         />
                         <span><ScissorsIcon size={15} /> Cut line on split sheet (dashed divider)</span>
                       </label>
@@ -751,7 +819,7 @@ export function FlutterLayout({
                             className="flutter-input"
                             value={activeTokens.fontFamily}
                             onChange={(e) =>
-                              patchActiveTokens({ fontFamily: e.target.value as StyleTokens['fontFamily'] })
+                              patchMasterTokens({ fontFamily: e.target.value as StyleTokens['fontFamily'] })
                             }
                           >
                             <option value="serif">Times / Serif (Academic)</option>
@@ -769,7 +837,7 @@ export function FlutterLayout({
                             max={14}
                             step={0.5}
                             value={activeTokens.baseFontSize}
-                            onChange={(e) => patchActiveTokens({ baseFontSize: Number(e.target.value) })}
+                            onChange={(e) => patchMasterTokens({ baseFontSize: Number(e.target.value) })}
                             style={{ width: '100%', accentColor: '#4f46e5' }}
                           />
                         </label>
@@ -784,7 +852,7 @@ export function FlutterLayout({
                             max={2}
                             step={0.02}
                             value={activeTokens.lineHeight}
-                            onChange={(e) => patchActiveTokens({ lineHeight: Number(e.target.value) })}
+                            onChange={(e) => patchMasterTokens({ lineHeight: Number(e.target.value) })}
                             style={{ width: '100%', accentColor: '#4f46e5' }}
                           />
                         </label>
@@ -900,14 +968,14 @@ export function FlutterLayout({
                           <button
                             type="button"
                             className={`flutter-seg-btn ${activeTokens.headerAlign === 'center' ? 'flutter-seg-btn--active' : ''}`}
-                            onClick={() => patchActiveTokens({ headerAlign: 'center' })}
+                            onClick={() => patchMasterTokens({ headerAlign: 'center' })}
                           >
                             Centre Header
                           </button>
                           <button
                             type="button"
                             className={`flutter-seg-btn ${activeTokens.headerAlign === 'left' ? 'flutter-seg-btn--active' : ''}`}
-                            onClick={() => patchActiveTokens({ headerAlign: 'left' })}
+                            onClick={() => patchMasterTokens({ headerAlign: 'left' })}
                           >
                             Left Align
                           </button>
@@ -921,7 +989,7 @@ export function FlutterLayout({
                             <input
                               type="checkbox"
                               checked={activeTokens.showHeaderRule}
-                              onChange={(e) => patchActiveTokens({ showHeaderRule: e.target.checked })}
+                              onChange={(e) => patchMasterTokens({ showHeaderRule: e.target.checked })}
                             />
                             <span>Line under title</span>
                           </label>
@@ -933,7 +1001,7 @@ export function FlutterLayout({
                             <input
                               type="checkbox"
                               checked={activeTokens.showDateLine}
-                              onChange={(e) => patchActiveTokens({ showDateLine: e.target.checked })}
+                              onChange={(e) => patchMasterTokens({ showDateLine: e.target.checked })}
                             />
                             <span>DATE left / Marks right</span>
                           </label>
@@ -945,7 +1013,7 @@ export function FlutterLayout({
                             <input
                               type="checkbox"
                               checked={activeTokens.showCourseTitleLine}
-                              onChange={(e) => patchActiveTokens({ showCourseTitleLine: e.target.checked })}
+                              onChange={(e) => patchMasterTokens({ showCourseTitleLine: e.target.checked })}
                             />
                             <span>Subject as heading line</span>
                           </label>
@@ -957,7 +1025,7 @@ export function FlutterLayout({
                             <input
                               type="checkbox"
                               checked={activeTokens.uppercaseHeadings}
-                              onChange={(e) => patchActiveTokens({ uppercaseHeadings: e.target.checked })}
+                              onChange={(e) => patchMasterTokens({ uppercaseHeadings: e.target.checked })}
                             />
                             <span>Uppercase Headings</span>
                           </label>
@@ -970,7 +1038,7 @@ export function FlutterLayout({
                               <input
                                 type="checkbox"
                                 checked={activeTokens.showRegNoBox}
-                                onChange={(e) => patchActiveTokens({ showRegNoBox: e.target.checked })}
+                                onChange={(e) => patchMasterTokens({ showRegNoBox: e.target.checked })}
                               />
                               <span>Register number box</span>
                             </label>
@@ -979,7 +1047,7 @@ export function FlutterLayout({
                               style={{ width: 120 }}
                               type="text"
                               value={activeTokens.regNoLabel}
-                              onChange={(e) => patchActiveTokens({ regNoLabel: e.target.value })}
+                              onChange={(e) => patchMasterTokens({ regNoLabel: e.target.value })}
                               placeholder="Reg. No."
                               disabled={!activeTokens.showRegNoBox}
                             />
@@ -1015,21 +1083,21 @@ export function FlutterLayout({
                           <button
                             type="button"
                             className={`flutter-seg-btn ${activeTokens.borderStyle === 'grid' ? 'flutter-seg-btn--active' : ''}`}
-                            onClick={() => patchActiveTokens({ borderStyle: 'grid' })}
+                            onClick={() => patchMasterTokens({ borderStyle: 'grid' })}
                           >
                             Full Grid
                           </button>
                           <button
                             type="button"
                             className={`flutter-seg-btn ${activeTokens.borderStyle === 'lines' ? 'flutter-seg-btn--active' : ''}`}
-                            onClick={() => patchActiveTokens({ borderStyle: 'lines' })}
+                            onClick={() => patchMasterTokens({ borderStyle: 'lines' })}
                           >
                             Horizontal Lines
                           </button>
                           <button
                             type="button"
                             className={`flutter-seg-btn ${activeTokens.borderStyle === 'none' ? 'flutter-seg-btn--active' : ''}`}
-                            onClick={() => patchActiveTokens({ borderStyle: 'none' })}
+                            onClick={() => patchMasterTokens({ borderStyle: 'none' })}
                           >
                             No Borders
                           </button>
@@ -1043,7 +1111,7 @@ export function FlutterLayout({
                             <input
                               type="checkbox"
                               checked={activeTokens.partsInTable}
-                              onChange={(e) => patchActiveTokens({ partsInTable: e.target.checked })}
+                              onChange={(e) => patchMasterTokens({ partsInTable: e.target.checked })}
                             />
                             <span>Part heading inside grid</span>
                           </label>
@@ -1054,7 +1122,7 @@ export function FlutterLayout({
                             <input
                               type="checkbox"
                               checked={activeTokens.showColumnHeader}
-                              onChange={(e) => patchActiveTokens({ showColumnHeader: e.target.checked })}
+                              onChange={(e) => patchMasterTokens({ showColumnHeader: e.target.checked })}
                             />
                             <span>Column header row</span>
                           </label>
@@ -1071,7 +1139,7 @@ export function FlutterLayout({
                             title="Top Padding"
                             value={activeTokens.cellPadding.top}
                             onChange={(e) =>
-                              patchActiveTokens({
+                              patchMasterTokens({
                                 cellPadding: { ...activeTokens.cellPadding, top: Number(e.target.value) },
                               })
                             }
@@ -1082,7 +1150,7 @@ export function FlutterLayout({
                             title="Bottom Padding (Default 3)"
                             value={activeTokens.cellPadding.bottom}
                             onChange={(e) =>
-                              patchActiveTokens({
+                              patchMasterTokens({
                                 cellPadding: { ...activeTokens.cellPadding, bottom: Number(e.target.value) },
                               })
                             }
@@ -1093,7 +1161,7 @@ export function FlutterLayout({
                             title="Left Padding"
                             value={activeTokens.cellPadding.left}
                             onChange={(e) =>
-                              patchActiveTokens({
+                              patchMasterTokens({
                                 cellPadding: { ...activeTokens.cellPadding, left: Number(e.target.value) },
                               })
                             }
@@ -1104,7 +1172,7 @@ export function FlutterLayout({
                             title="Right Padding"
                             value={activeTokens.cellPadding.right}
                             onChange={(e) =>
-                              patchActiveTokens({
+                              patchMasterTokens({
                                 cellPadding: { ...activeTokens.cellPadding, right: Number(e.target.value) },
                               })
                             }
@@ -1122,7 +1190,7 @@ export function FlutterLayout({
                             title="Q.No Width"
                             value={activeTokens.colWidths?.no ?? 40}
                             onChange={(e) =>
-                              patchActiveTokens({
+                              patchMasterTokens({
                                 colWidths: { ...activeTokens.colWidths, no: Number(e.target.value) },
                               })
                             }
@@ -1133,7 +1201,7 @@ export function FlutterLayout({
                             title="Marks Width"
                             value={activeTokens.colWidths?.marks ?? 52}
                             onChange={(e) =>
-                              patchActiveTokens({
+                              patchMasterTokens({
                                 colWidths: { ...activeTokens.colWidths, marks: Number(e.target.value) },
                               })
                             }
@@ -1144,7 +1212,7 @@ export function FlutterLayout({
                             title="Level (K) Width"
                             value={activeTokens.colWidths?.level ?? 54}
                             onChange={(e) =>
-                              patchActiveTokens({
+                              patchMasterTokens({
                                 colWidths: { ...activeTokens.colWidths, level: Number(e.target.value) },
                               })
                             }
@@ -1155,7 +1223,7 @@ export function FlutterLayout({
                             title="CO Width"
                             value={activeTokens.colWidths?.co ?? 48}
                             onChange={(e) =>
-                              patchActiveTokens({
+                              patchMasterTokens({
                                 colWidths: { ...activeTokens.colWidths, co: Number(e.target.value) },
                               })
                             }
@@ -1166,7 +1234,7 @@ export function FlutterLayout({
                             title="PO Width"
                             value={activeTokens.colWidths?.po ?? 48}
                             onChange={(e) =>
-                              patchActiveTokens({
+                              patchMasterTokens({
                                 colWidths: { ...activeTokens.colWidths, po: Number(e.target.value) },
                               })
                             }
@@ -1184,7 +1252,7 @@ export function FlutterLayout({
                             min={0}
                             max={60}
                             value={activeTokens.rowMinHeight}
-                            onChange={(e) => patchActiveTokens({ rowMinHeight: Number(e.target.value) })}
+                            onChange={(e) => patchMasterTokens({ rowMinHeight: Number(e.target.value) })}
                           />
                         </label>
 
@@ -1196,7 +1264,7 @@ export function FlutterLayout({
                               type="number"
                               value={activeTokens.pageMargin.top}
                               onChange={(e) =>
-                                patchActiveTokens({
+                                patchMasterTokens({
                                   pageMargin: { ...activeTokens.pageMargin, top: Number(e.target.value) },
                                 })
                               }
@@ -1206,7 +1274,7 @@ export function FlutterLayout({
                               type="number"
                               value={activeTokens.pageMargin.bottom}
                               onChange={(e) =>
-                                patchActiveTokens({
+                                patchMasterTokens({
                                   pageMargin: { ...activeTokens.pageMargin, bottom: Number(e.target.value) },
                                 })
                               }
@@ -1240,7 +1308,7 @@ export function FlutterLayout({
                         <input
                           type="checkbox"
                           checked={activeTokens.showFooter}
-                          onChange={(e) => patchActiveTokens({ showFooter: e.target.checked })}
+                          onChange={(e) => patchMasterTokens({ showFooter: e.target.checked })}
                         />
                         <span>Print footer strip along the bottom of the page</span>
                       </label>
@@ -1367,7 +1435,6 @@ export function FlutterLayout({
                 onAddQuestionPaper={() => {
                   onAddItem()
                   onLayout('split')
-                  onMirrorHalves(false)
                 }}
                 onSwitchQuestionPaper={(idx) => {
                   if (items[idx]) onSelectActiveItem(items[idx].id)
@@ -1626,6 +1693,121 @@ export function FlutterLayout({
                   <div className="flutter-grid-2">
 
                   </div>
+                </div>
+                {/* ── UPLOAD A FORMAT ─────────────────────────────────────
+                    Read an existing paper off a photo and take from it only
+                    the pieces you tick — the heading, or a whole part. */}
+                <div className="flutter-card" style={{ marginTop: 12 }}>
+                  <div className="flutter-card__head">
+                    <span className="flutter-card__title">
+                      <FileUpIcon size={15} /> Upload format
+                    </span>
+                    <span className="flutter-card__sub">
+                      A photo of a paper you already use. Its heading and parts are
+                      read on this device, and you choose what to keep.
+                    </span>
+                  </div>
+
+                  <label className="qc-action qc-action--upload" style={{ marginTop: 10 }}>
+                    {formatBusy ? <span className="qc-spin" /> : <FileUpIcon size={16} />}
+                    <span>{formatBusy || 'Choose image'}</span>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      disabled={Boolean(formatBusy)}
+                      style={{ display: 'none' }}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        e.target.value = ''
+                        if (!file) return
+                        setFormatPaper(null)
+                        setFormatBusy('Reading…')
+                        try {
+                          const { text } = await extractFile(file, (pct, label) =>
+                            setFormatBusy(`${label} ${pct}%`),
+                          )
+                          const parsed = parseRawText(text)
+                          setFormatPaper(parsed)
+                          setFormatPick(
+                            new Set<string>([
+                              'header',
+                              ...parsed.parts.map((part) => part.id),
+                            ]),
+                          )
+                        } catch (err) {
+                          setFormatBusy('')
+                          window.alert(`Could not read that file — ${String(err)}`)
+                          return
+                        }
+                        setFormatBusy('')
+                      }}
+                    />
+                  </label>
+
+                  {formatPaper && (
+                    <div className="qc-fmt">
+                      <label className="flutter-checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={formatPick.has('header')}
+                          onChange={(e) =>
+                            setFormatPick((prev) => {
+                              const next = new Set(prev)
+                              if (e.target.checked) next.add('header')
+                              else next.delete('header')
+                              return next
+                            })
+                          }
+                        />
+                        <span>
+                          <b>Heading</b>
+                          <span className="qc-fmt__note">
+                            {[
+                              formatPaper.header.institution,
+                              formatPaper.header.department,
+                              formatPaper.header.examTitle,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ') || 'nothing found'}
+                          </span>
+                        </span>
+                      </label>
+
+                      {formatPaper.parts.map((part) => (
+                        <label key={part.id} className="flutter-checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={formatPick.has(part.id)}
+                            onChange={(e) =>
+                              setFormatPick((prev) => {
+                                const next = new Set(prev)
+                                if (e.target.checked) next.add(part.id)
+                                else next.delete(part.id)
+                                return next
+                              })
+                            }
+                          />
+                          <span>
+                            <b>{part.label || 'Part'}</b>
+                            <span className="qc-fmt__note">
+                              {part.questions.length} question
+                              {part.questions.length === 1 ? '' : 's'}
+                              {part.instruction ? ` · ${part.instruction}` : ''}
+                            </span>
+                          </span>
+                        </label>
+                      ))}
+
+                      <button
+                        type="button"
+                        className="btn btn--sm btn--primary"
+                        disabled={formatPick.size === 0}
+                        onClick={() => applyFormat()}
+                      >
+                        Add to question paper 1
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

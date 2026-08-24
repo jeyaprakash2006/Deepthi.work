@@ -65,8 +65,9 @@ export function Formatter({ onExit }: { onExit: () => void }) {
   const [items, setItems] = useState<Item[]>(() => restored?.items ?? [newItem(1)])
   const [activeItemId, setActiveItemId] = useState<string | null>(restored?.activeItemId ?? null)
   const [layout, setLayout] = useState<SheetLayout>(restored?.layout ?? 'single')
+  // Only the classic grid offers A / B; the Flutter UI always mirrors.
+  const [mirrorHalves, setMirrorHalves] = useState(restored?.mirrorHalves ?? true)
   // A/A: the same paper on both halves of one sheet — not a second item.
-  const [mirrorHalves, setMirrorHalves] = useState(restored?.mirrorHalves ?? false)
   const [format, setFormat] = useState<DownloadFormat>(restored?.format ?? 'pdf')
   const [view, setView] = useState<View>('editor')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -210,14 +211,15 @@ export function Formatter({ onExit }: { onExit: () => void }) {
   /**
    * Undo covers the whole workspace, because the things a teacher wants back
    * cut across it: a deleted paper, a heading typed over, a column switched
-   * off. Snapshots are taken 500ms after a change settles, so a sentence typed
-   * into a question is one step to undo rather than forty.
+   * off, an approval given. Everything per-paper — including approvedAt —
+   * rides on the item, so the items array is the whole of it. Snapshots are
+   * taken 500ms after a change settles, so a sentence typed into a question is
+   * one step to undo rather than forty.
    */
   type Snapshot = {
     master: MasterStyle
     items: Item[]
     layout: SheetLayout
-    mirrorHalves: boolean
     activeItemId: string | null
   }
 
@@ -229,7 +231,7 @@ export function Formatter({ onExit }: { onExit: () => void }) {
   const [historyTick, setHistoryTick] = useState(0)
 
   useEffect(() => {
-    const current: Snapshot = { master, items, layout, mirrorHalves, activeItemId }
+    const current: Snapshot = { master, items, layout, activeItemId }
     if (replaying.current) {
       replaying.current = false
       settled.current = current
@@ -244,14 +246,13 @@ export function Formatter({ onExit }: { onExit: () => void }) {
       setHistoryTick((t) => t + 1)
     }, 500)
     return () => clearTimeout(timer)
-  }, [master, items, layout, mirrorHalves, activeItemId])
+  }, [master, items, layout, activeItemId])
 
   const applySnapshot = useCallback((snap: Snapshot) => {
     replaying.current = true
     setMaster(snap.master)
     setItems(snap.items)
     setLayout(snap.layout)
-    setMirrorHalves(snap.mirrorHalves)
     setActiveItemId(snap.activeItemId)
   }, [])
 
@@ -290,7 +291,6 @@ export function Formatter({ onExit }: { onExit: () => void }) {
     setItems([newItem(1)])
     setActiveItemId(null)
     setLayout('single')
-    setMirrorHalves(false)
     say('Workspace reset to defaults.')
   }, [say])
 
@@ -432,7 +432,7 @@ export function Formatter({ onExit }: { onExit: () => void }) {
   }, [])
 
   // A split sheet carries the same paper twice. Two different papers on one
-  // sheet (A / B) is not offered yet, so the flag is not read from state.
+  // sheet (A / B) is not offered, so buildSheets is always told to mirror.
   const sheets = useMemo(() => buildSheets(items, layout, true), [items, layout])
 
   // Persist the workspace so a reload, or a trip to another page and back,
@@ -682,14 +682,12 @@ export function Formatter({ onExit }: { onExit: () => void }) {
           items={items}
           activeItemId={activeItemId}
           layout={layout}
-          mirrorHalves={mirrorHalves}
           sheets={sheets}
           fits={fits}
           busy={busy}
           onTokens={patchTokens}
           onTokensAll={patchAllTokens}
           onLayout={setLayout}
-          onMirrorHalves={setMirrorHalves}
           onSelectActiveItem={setActiveItemId}
           onOpenValidator={(itemId) => setEditingId(itemId)}
           onUploadFile={(itemId, file) => void handleItemFile(itemId, file)}
@@ -753,8 +751,7 @@ export function Formatter({ onExit }: { onExit: () => void }) {
               onSelectActiveItem={setActiveItemId}
               onLayout={setLayout}
               mirrorHalves={mirrorHalves}
-              onMirrorHalves={setMirrorHalves}
-              onFormat={setFormat}
+                  onFormat={setFormat}
               onDownload={handleDownload}
             />
           </div>
@@ -820,10 +817,10 @@ export function Formatter({ onExit }: { onExit: () => void }) {
                 tokens={master.tokens}
                 layout={layout}
                 mirrorHalves={mirrorHalves}
+                onMirrorHalves={setMirrorHalves}
                 fits={fits}
                 onLayout={setLayout}
-                onMirrorHalves={setMirrorHalves}
-                onTokens={patchTokens}
+                      onTokens={patchTokens}
                 onEditPaper={(itemId, paper) => patchItem(itemId, { paper, status: 'approved' })}
                 onCopyTopToBottom={handleCopyTopToBottom}
               />
@@ -857,7 +854,6 @@ export function Formatter({ onExit }: { onExit: () => void }) {
           layout={layout}
           onLayout={setLayout}
           mirrorHalves={mirrorHalves}
-          onMirrorHalves={setMirrorHalves}
           onApprove={(paper) => {
             // The popup stays open and switches to the page proof; it closes
             // itself from there.
@@ -885,8 +881,8 @@ function PreviewPane({
   sheets,
   tokens,
   layout,
-  mirrorHalves,
   fits,
+  mirrorHalves,
   onLayout,
   onMirrorHalves,
   onTokens,

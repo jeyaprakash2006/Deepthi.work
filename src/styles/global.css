@@ -1475,15 +1475,6 @@ body {
   box-sizing: border-box;
 }
 
-.flutter-preview-bar__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12.5px;
-  font-weight: 750;
-  color: #0f172a;
-}
-
 .flutter-icon-btn {
   display: inline-flex;
   align-items: center;
@@ -1516,103 +1507,10 @@ body {
   box-shadow: 0 0 0 2px rgba(47, 128, 255, 0.18);
 }
 
-.flutter-indicator-dot {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #94a3b8;
-  transition: all 140ms ease;
-}
-
-.flutter-indicator-dot--on {
-  background: #10b981;
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
-}
-
-.flutter-paper-pager {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 2px 3px;
-  height: 32px;
-  box-sizing: border-box;
-}
-
-.flutter-pager-arrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 24px;
-  border-radius: 5px;
-  border: none;
-  background: transparent;
-  color: #475569;
-  cursor: pointer;
-  transition: all 120ms ease;
-  padding: 0;
-}
-
-.flutter-pager-arrow:disabled {
-  opacity: 0.25;
-  cursor: default;
-}
-
-.flutter-pager-arrow:not(:disabled):hover {
-  background: #e2e8f0;
-  color: #0f172a;
-}
-
-.flutter-pager-text {
-  font-size: 11px;
-  font-weight: 800;
-  color: #334155;
-  padding: 0 4px;
-  user-select: none;
-}
-
 .flutter-preview-bar__actions {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.flutter-swipe-dots {
-  position: absolute;
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 8px;
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(4px);
-  border-radius: 12px;
-  z-index: 10;
-}
-
-.flutter-swipe-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  border: none;
-  padding: 0;
-  background: rgba(255, 255, 255, 0.4);
-  cursor: pointer;
-  transition: all 140ms ease;
-}
-
-.flutter-swipe-dot--active {
-  background: #ffffff;
-  width: 14px;
-  border-radius: 4px;
 }
 
 .flutter-canvas {
@@ -1848,56 +1746,6 @@ body {
   border-color: #cbd5e1;
 }
 
-.flutter-btn-trio {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  width: 100%;
-  box-sizing: border-box;
-  margin: 10px 0;
-}
-
-.flutter-trio-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 8px 6px;
-  font-size: 11.5px;
-  font-weight: 750;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 140ms ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-  min-width: 0;
-}
-
-.flutter-trio-btn:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-}
-
-.flutter-trio-btn:active {
-  transform: translateY(0);
-}
-
-.flutter-trio-btn--upload {
-  background: linear-gradient(135deg, #3730a3, #2f80ff);
-  color: #ffffff;
-}
-
-.flutter-trio-btn--paste {
-  background: linear-gradient(135deg, #047857, #059669);
-  color: #ffffff;
-}
-
-.flutter-trio-btn--create {
-  background: linear-gradient(135deg, #6d28d9, #7c3aed);
-  color: #ffffff;
-}
-
 /* ── Clean Box-Free Paper Editor in Center Canvas ────────────── */
 .clean-paper-editor {
   width: 100%;
@@ -1907,36 +1755,6 @@ body {
   padding: 12px 10px 62px 10px;
   box-sizing: border-box;
   margin: 0 auto;
-}
-
-.clean-editor-top-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding: 8px 12px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.clean-editor-top-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.clean-editor-title {
-  font-size: 13px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.clean-editor-summary {
-  font-size: 11px;
-  font-weight: 600;
-  color: #64748b;
 }
 
 /* ── Clean Editor Accordions & Header Summary ─────────────────── */
@@ -1992,27 +1810,6 @@ body {
   gap: 6px;
 }
 
-.clean-header-summary-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-size: 12.5px;
-}
-
-.clean-header-summary-label {
-  font-weight: 750;
-  color: #475569;
-  min-width: 90px;
-  flex: none;
-  font-size: 12px;
-}
-
-.clean-header-summary-val {
-  font-weight: 650;
-  color: #0f172a;
-  word-break: break-word;
-}
-
 .editor-accordion__arrow--open {
   transform: rotate(90deg);
   color: #2f80ff;
@@ -2042,32 +1839,6 @@ body {
   gap: 10px;
 }
 
-.clean-settings-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 750;
-  color: #475569;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 140ms ease;
-}
-
-.clean-settings-toggle-btn:hover {
-  background: #e2e8f0;
-  color: #0f172a;
-}
-
-.clean-settings-toggle-btn--active {
-  background: #2f80ff;
-  color: #ffffff;
-  border-color: #1f6fe5;
-}
-
 .clean-settings-panel {
   background: #f8fafc;
   border: 1px solid #cbd5e1;
@@ -2075,26 +1846,6 @@ body {
   padding: 12px 14px;
   margin-bottom: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.clean-settings-head {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.clean-settings-title {
-  font-size: 12.5px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.clean-settings-subtitle {
-  font-size: 11px;
-  color: #64748b;
 }
 
 .clean-settings-grid {
@@ -2122,54 +1873,6 @@ body {
   color: #475569;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-}
-
-.clean-settings-checkboxes {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.clean-checkbox-label {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 12px;
-  color: #1e293b;
-  cursor: pointer;
-  background: #ffffff;
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-  transition: all 120ms ease;
-}
-
-.clean-checkbox-label:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-}
-
-.clean-checkbox-label input[type="checkbox"] {
-  margin-top: 2px;
-  cursor: pointer;
-  accent-color: #2f80ff;
-}
-
-.clean-checkbox-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.clean-checkbox-text strong {
-  font-size: 12px;
-  font-weight: 750;
-  color: #0f172a;
-}
-
-.clean-checkbox-text small {
-  font-size: 10.5px;
-  color: #64748b;
 }
 
 .clean-sheet-container {
@@ -2354,38 +2057,6 @@ body {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.clean-q-meta-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex: none;
-}
-
-.clean-meta-item {
-  background: #f1f5f9;
-  border-radius: 4px;
-  padding: 2px 4px;
-  display: flex;
-  align-items: center;
-}
-
-.clean-meta-input {
-  width: 36px;
-  font-size: 11px;
-  font-weight: 700;
-  text-align: center;
-  color: #475569;
-  border: none;
-  background: transparent;
-  outline: none;
-  padding: 0;
-}
-
-.clean-meta-input:focus {
-  color: #2f80ff;
-  font-weight: 800;
-}
-
 .clean-q-actions {
   display: flex;
   align-items: center;
@@ -2503,20 +2174,6 @@ body {
   background: #ffffff;
 }
 
-.clean-sub-marks {
-  width: 36px;
-  font-size: 11px;
-  font-weight: 700;
-  text-align: center;
-  color: #475569;
-  border: none;
-  background: #f1f5f9;
-  border-radius: 4px;
-  padding: 2px 4px;
-  outline: none;
-  flex: none;
-}
-
 .clean-add-q-line {
   padding-top: 4px;
 }
@@ -2561,138 +2218,6 @@ body {
   border-color: #a5b4fc;
 }
 
-/* ── Clean Paper Switcher & Quick Actions ───────────────────── */
-.clean-paper-switcher-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 12px;
-  background: #f1f5f9;
-  padding: 4px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-}
-
-.clean-paper-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 750;
-  color: #64748b;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 120ms ease;
-}
-
-.clean-paper-tab:hover {
-  color: #1e293b;
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.clean-paper-tab--active {
-  color: #2f80ff;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-.clean-paper-tab-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  font-size: 10px;
-  color: #94a3b8;
-  margin-left: 2px;
-}
-
-.clean-paper-tab-close:hover {
-  background: #fee2e2;
-  color: #ef4444;
-}
-
-.clean-table-top-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.clean-quick-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
-  font-size: 11.5px;
-  font-weight: 700;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 120ms ease;
-}
-
-.clean-quick-btn--upload {
-  background: #eff6ff;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
-}
-
-.clean-quick-btn--upload:hover {
-  background: #dbeafe;
-}
-
-.clean-quick-btn--paste {
-  background: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
-}
-
-.clean-quick-btn--paste:hover {
-  background: #d1fae5;
-}
-
-.clean-add-new-qp-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 18px;
-  font-size: 13px;
-  font-weight: 800;
-  color: #047857;
-  background: #ecfdf5;
-  border: 1.5px dashed #6ee7b7;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 140ms ease;
-  box-shadow: 0 1px 2px rgba(5, 150, 105, 0.05);
-}
-
-.clean-add-new-qp-btn:hover {
-  background: #d1fae5;
-  border-color: #34d399;
-  transform: translateY(-1px);
-}
-
-/* ── Review Screen Settings Popover ─────────────────────────── */
-.flutter-review-settings-popover {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 70;
-  width: 320px;
-  max-width: calc(100% - 24px);
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  padding: 12px 14px;
-  box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.18), 0 4px 10px -2px rgba(0, 0, 0, 0.08);
-  animation: flutterPopoverFadeIn 140ms ease-out;
-}
-
 @keyframes flutterPopoverFadeIn {
   from {
     opacity: 0;
@@ -2704,158 +2229,10 @@ body {
   }
 }
 
-.flutter-review-settings-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.flutter-review-settings-title {
-  font-size: 13px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.flutter-review-settings-close {
-  border: none;
-  background: transparent;
-  color: #64748b;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
-  line-height: 1;
-}
-
-.flutter-review-settings-close:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-}
-
-.flutter-review-settings-body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.flutter-review-settings-section {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.flutter-review-settings-label {
-  font-size: 10.5px;
-  font-weight: 800;
-  color: #475569;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.flutter-review-settings-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-
-.flutter-review-checkbox-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  background: #f8fafc;
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-  cursor: pointer;
-  transition: all 120ms ease;
-}
-
-.flutter-review-checkbox-item:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-}
-
-.flutter-review-checkbox-item input[type="checkbox"] {
-  margin-top: 2px;
-  cursor: pointer;
-  accent-color: #2f80ff;
-}
-
-.flutter-review-checkbox-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.flutter-review-checkbox-text strong {
-  font-size: 11.5px;
-  font-weight: 750;
-  color: #0f172a;
-  line-height: 1.2;
-}
-
-.flutter-review-checkbox-text small {
-  font-size: 10px;
-  color: #64748b;
-  line-height: 1.2;
-}
-
-/* ── Dynamic Floating Action Button (FAB) ─────────────────────── */
-.flutter-fab {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 10px 18px;
-  border-radius: 9999px;
-  border: none;
-  font-size: 13.5px;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.25), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
-  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
-  letter-spacing: 0.01em;
-}
-
-.flutter-fab:hover {
-  transform: translateY(-2px) scale(1.04);
-  filter: brightness(1.08);
-  box-shadow: 0 14px 28px -4px rgba(0, 0, 0, 0.3), 0 6px 8px -3px rgba(0, 0, 0, 0.18);
-}
-
-.flutter-fab:active {
-  transform: translateY(0) scale(0.98);
-}
-
-.flutter-fab--review {
-  background: linear-gradient(135deg, #047857, #10b981);
-  color: #ffffff;
-}
-
-.flutter-fab--edit {
-  background: linear-gradient(135deg, #3730a3, #5b9dff);
-  color: #ffffff;
-}
-
 .flutter-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.flutter-grid-3 {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 6px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -3028,7 +2405,11 @@ textarea::placeholder {
     border-top: 1px solid #e2e8f0 !important;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06) !important;
     display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
+    /* However many tabs there are, they share the bar equally — a fixed
+       four left an empty quarter once the nav went down to three. */
+    grid-template-columns: none !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: 1fr !important;
     transform: none !important;
     transition: none !important;
     animation: none !important;
@@ -3339,13 +2720,6 @@ textarea::placeholder {
   padding: 6px 11px;
 }
 
-.clean-quick-btn--upload:hover,
-.clean-quick-btn--paste:hover {
-  background: #f8fafc;
-  border-color: #94a3b8;
-  color: #0f172a;
-}
-
 /* A bin is only alarming once you reach for it. */
 .clean-action-chip {
   padding: 4px 7px;
@@ -3535,14 +2909,6 @@ select:focus {
   background: #eaf2ff;
 }
 
-.clean-quick-btn--upload,
-.clean-quick-btn--paste {
-  border-radius: 11px;
-  border-color: #e3e9f2;
-  padding: 9px 14px;
-  font-size: 12.5px;
-}
-
 .flutter-segmented {
   border-radius: 12px;
   border-color: #e3e9f2;
@@ -3630,15 +2996,6 @@ select:focus {
   box-sizing: border-box;
 }
 
-.qc-paste__row {
-  display: flex;
-  gap: 8px;
-}
-
-.qc-paste__row > .btn {
-  flex: 1;
-}
-
 /* Floats over the sheet, clear of the tab bar. */
 .qc-fab {
   position: absolute;
@@ -3659,14 +3016,6 @@ select:focus {
   cursor: pointer;
   box-shadow: 0 6px 18px rgba(47, 128, 255, 0.34);
   transition: background 140ms ease, transform 140ms ease;
-}
-
-.qc-fab:hover {
-  background: #1f6fe5;
-}
-
-.qc-fab:active {
-  transform: scale(0.97);
 }
 
 /* ── Columns & numbering popover ──────────────────────────────────────────
@@ -3811,64 +3160,6 @@ select:focus {
   flex: none;
 }
 
-.qc-paper {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  flex: none;
-  max-width: 190px;
-  padding: 7px 12px;
-  border-radius: 999px;
-  border: 1px solid #e3e9f2;
-  background: #ffffff;
-  color: #55617a;
-  font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 140ms ease;
-}
-
-.qc-paper__n {
-  flex: none;
-  width: 19px;
-  height: 19px;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  background: #eef2f7;
-  color: #64748b;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.qc-paper__name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.qc-paper--active {
-  border-color: #2f80ff;
-  background: #eaf2ff;
-  color: #1f6fe5;
-}
-
-.qc-paper--active .qc-paper__n {
-  background: #2f80ff;
-  color: #ffffff;
-}
-
-.qc-paper--add {
-  padding: 8px;
-  color: #7c8798;
-}
-
-.qc-paper--add:hover {
-  border-color: #2f80ff;
-  color: #2f80ff;
-  background: #f7faff;
-}
-
 /* Destructive, so it only looks it when you reach for it. */
 .flutter-icon-btn--danger:hover {
   color: #dc2626;
@@ -3879,27 +3170,6 @@ select:focus {
 .flutter-icon-btn:disabled {
   opacity: 0.38;
   cursor: default;
-}
-
-/* An unnamed paper is just its number — no invented title. */
-.qc-paper--bare {
-  padding: 7px;
-  gap: 0;
-}
-
-.clean-quick-btn--delete {
-  background: #ffffff;
-  color: #475569;
-  border: 1px solid #cbd5e1;
-  border-radius: 11px;
-  padding: 9px 14px;
-  font-size: 12.5px;
-}
-
-.clean-quick-btn--delete:hover {
-  color: #dc2626;
-  border-color: #fca5a5;
-  background: #fef2f2;
 }
 
 .qc-paper:disabled,
@@ -4044,17 +3314,6 @@ select:focus {
 .qc-ask__go:hover {
   background: #b91c1c;
   border-color: #b91c1c;
-}
-
-.qc-paper-name {
-  margin: 0 0 10px;
-  font-size: 14px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.qc-parse {
-  width: 100%;
 }
 
 /* Sheet tools on the review screen: icons until you want one. */
@@ -4278,4 +3537,66 @@ body,
    that the arithmetic would miss. */
 .flutter-preview-pane {
   padding-bottom: 75px;
+}
+
+/* ── Upload format ────────────────────────────────────────────────────────
+   What was found in the photo, each piece with its own tick, so a heading can
+   come across without its questions and a part without its heading. */
+
+.qc-fmt {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #eaeef5;
+}
+
+.qc-fmt .flutter-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.qc-fmt .flutter-checkbox-label input {
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+  accent-color: #2f80ff;
+  flex: none;
+}
+
+.qc-fmt__note {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: #7c8798;
+}
+
+/* Reading a photo takes a moment, and the button says so while it does. */
+.qc-spin {
+  width: 15px;
+  height: 15px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 999px;
+  animation: qc-spin 700ms linear infinite;
+}
+
+@keyframes qc-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Sits beside Parse & Format in the row, so it keeps to its own words. */
+.qc-row-view {
+  width: auto;
+  flex: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
 }
