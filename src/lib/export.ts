@@ -190,7 +190,11 @@ export async function exportSeparatePdfs(
       )
     }
     const arrayBuf = pdf.output('arraybuffer')
-    entries[`${slugify(doc.name)}.pdf`] = new Uint8Array(arrayBuf)
+    const base = slugify(doc.name)
+    let filename = `${base}.pdf`
+    let suffix = 2
+    while (filename in entries) filename = `${base}-${suffix++}.pdf`
+    entries[filename] = new Uint8Array(arrayBuf)
     opts.onProgress?.(d + 1, validDocs.length)
   }
 

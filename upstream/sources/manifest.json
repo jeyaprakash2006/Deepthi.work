@@ -1,0 +1,23 @@
+{
+  "wordcraft": {
+    "repository": "https://github.com/storytold/wordcraft.git",
+    "tag": "v0.9.0",
+    "commit": "2e6db0bd88795e80375176c01665cff7dbe2b057",
+    "archive": "wordcraft-v0.9.0.tar.gz",
+    "sha256": "975a7096e99102a1c8edc04b11d40f54e07b313a273d8baa8cdcb9cdaa9b672f"
+  },
+  "gridcraft": {
+    "repository": "https://github.com/storytold/gridcraft.git",
+    "tag": "v0.10.0",
+    "commit": "2ebdf164c2c9c536122e0a2cffe79078b5c818ac",
+    "archive": "gridcraft-v0.10.0.tar.gz",
+    "sha256": "4babad9f50ec4bca1c4499001770e35f407331ad657d79c602ddb39520e10a15"
+  },
+  "deckcraft": {
+    "repository": "https://github.com/storytold/deckcraft.git",
+    "tag": "v0.5.0",
+    "commit": "a98df49b21632d69a3da994d35df1ea91dab41af",
+    "archive": "deckcraft-v0.5.0.tar.gz",
+    "sha256": "c441f095b1cb3afeb0c0df3c29fe2c395d9907792f329446475e7065f31a0402"
+  }
+}

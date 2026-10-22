@@ -8,3 +8,12 @@ dist-ssr/
 .vite/
 coverage/
 .firebase/
+
+# Independent upstream source repositories (see upstream/README.md).
+upstream/wordcraft/
+upstream/gridcraft/
+upstream/deckcraft/
+
+# Local artifacts, toolchains and test output
+tmp/
+output/

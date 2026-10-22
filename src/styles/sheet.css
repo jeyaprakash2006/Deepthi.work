@@ -43,6 +43,9 @@
 .sheet--split { padding: 0; display: block; }
 
 .sheet__half {
+  font-family: var(--sheet-font);
+  font-size: calc(var(--fs) * var(--fit));
+  line-height: var(--lh);
   height: 561px;
   padding: calc(var(--pm-top) * 0.62 * var(--fit, 1)) calc(var(--pm-right) * 0.87 * var(--fit, 1))
            calc(var(--pm-bottom) * 0.62 * var(--fit, 1)) calc(var(--pm-left) * 0.87 * var(--fit, 1));

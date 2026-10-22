@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' blob:; img-src 'self' blob: data:; font-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <script src="/editor/local-only.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>Deepthi Sheets</title>
+  <link rel="icon" href="./gridcraft-45f84b7721cb79a9.ico" integrity="sha384-FzBCWcgv5VqBLEPSBvyC78gOs2HMh3hKu2LSLSXU01NgL5yKLk/nHdINuu0Ztky1"/>
+
+<script type="module">
+import init, * as bindings from './gridcraft-deepthi-a2b5c78161cabc25.js';
+const wasm = await init({ module_or_path: './gridcraft-deepthi-a2b5c78161cabc25_bg.wasm' });
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script>
+  <style>
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #f3f3f3; }
+    #gridcraft_canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #gridcraft_loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: #555; font: 14px system-ui, sans-serif; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <canvas id="gridcraft_canvas"></canvas>
+  <div id="gridcraft_loading">Loading Deepthi Sheets&hellip;</div>
+</body>
+</html>

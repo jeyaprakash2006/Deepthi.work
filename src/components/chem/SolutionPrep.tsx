@@ -9,7 +9,7 @@
 import { useMemo, useState } from 'react'
 import { CHEMICALS } from '../../lib/chem/chemicals'
 import type { Chemical } from '../../lib/chem/chemicals'
-import { prepare, stockStrength } from '../../lib/chem/solution'
+import { prepare } from '../../lib/chem/solution'
 import type { Concentration } from '../../lib/chem/solution'
 
 const VOLUME_PRESETS = [100, 250, 500, 1000, 2000]
@@ -55,7 +55,9 @@ export function SolutionPrep() {
     }
   }, [chemical, mode, strength, volume, correctForAssay])
 
-  const stock = chemical.state === 'liquid' && chemical.specificGravity ? stockStrength(chemical) : null
+  const stock = result.value?.kind === 'liquid'
+    ? { normality: result.value.stockNormality, molarity: result.value.stockMolarity }
+    : null
 
   return (
     <div className="prep">

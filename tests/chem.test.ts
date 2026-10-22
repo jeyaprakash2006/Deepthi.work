@@ -130,3 +130,20 @@ describe('reference data', () => {
     expect(new Set(ids).size).toBe(ids.length)
   })
 })
+
+describe('editable reference validation', () => {
+  const request = { chemical: hcl, mode: 'normality' as const, strength: 0.1, volumeMl: 1000, correctForAssay: true }
+  it.each([NaN, Infinity, -1, 0])('rejects invalid strength and volume %s', value => {
+    expect(() => prepare({ ...request, strength: value })).toThrow()
+    expect(() => prepare({ ...request, volumeMl: value })).toThrow()
+  })
+  it.each(['nFactor', 'molarMass', 'assay', 'specificGravity'] as const)('rejects an empty or nonnumeric %s', field => {
+    for (const value of [0, NaN, Infinity, -1]) {
+      expect(() => prepare({ ...request, chemical: { ...hcl, [field]: value } })).toThrow()
+    }
+  })
+  it('rejects invalid purity and targets stronger than the stock', () => {
+    expect(() => prepare({ ...request, chemical: { ...hcl, assay: 101 } })).toThrow(/Purity/)
+    expect(() => prepare({ ...request, strength: stockStrength(hcl).normality + 1 })).toThrow(/stock strength/)
+  })
+})

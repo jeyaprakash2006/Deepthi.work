@@ -112,9 +112,10 @@ function extractLinesFromPage(items: unknown[]): string[] {
 async function extractPdf(file: File, onProgress?: OnProgress): Promise<string> {
   const pdfjs = await getPdfLib()
   const data = new Uint8Array(await file.arrayBuffer())
-  const doc = await pdfjs.getDocument({ data }).promise
+  const loadingTask = pdfjs.getDocument({ data })
 
   try {
+    const doc = await loadingTask.promise
     const pages: string[] = []
 
     for (let n = 1; n <= doc.numPages; n++) {
@@ -131,7 +132,7 @@ async function extractPdf(file: File, onProgress?: OnProgress): Promise<string> 
     // No text layer — this is a scan. Rasterise the pages and read them with OCR.
     return await ocrPdfPages(doc, onProgress)
   } finally {
-    await doc.destroy()
+    await loadingTask.destroy()
   }
 }
 

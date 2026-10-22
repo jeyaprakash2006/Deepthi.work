@@ -123,7 +123,7 @@ The preview is an editor, not a picture:
 
 - **Single A4** — one paper per page, 794 × 1123 px (A4 at 96 dpi).
 - **A4 Split** — two papers on one sheet, top and bottom half, divided by a `cut here` line.
-- **PDF** — vector page container with each page rasterised at 2× (≈192 dpi).
+- **PDF** — vector page container with each page rasterised at 3.2× (≈307 dpi).
 - **Image** — one `.png`, or a `.zip` of PNGs when there is more than one page.
 - **Text** — plain-text paper with the master branding, marks aligned to the right margin.
 
@@ -205,8 +205,8 @@ the client.
 
 Run against Node 26 / npm 11, driven in headless Chrome 151 via the DevTools protocol.
 
-- **57 unit tests** pass (`npm test`); `tsc --noEmit` clean; production build succeeds.
-- **53 browser checks** pass, with **no console errors or exceptions**:
+- **108 automated tests** pass (`npm test`); `tsc --noEmit` clean; production build succeeds.
+- **Historical browser checks** (from the original implementation):
   - Master style **PDF** → 9 fields cloned in 528 ms (text-layer fast path, no OCR).
   - **Scanned, image-only PDF** → detected, OCR'd, and 7 fields recovered
     (institution, department, exam title, course code, duration, max marks).
@@ -229,3 +229,79 @@ Run against Node 26 / npm 11, driven in headless Chrome 151 via the DevTools pro
 Not verified: browsers other than Chrome, and OCR on a photograph of paper (it was tested on
 rendered images, which is the easy case — a phone photo at an angle will do worse).
 # Deepthi.work
+
+## Reliability fixes verified on 19 October 2026
+
+- Duplicate subject names remain separate files in PDF ZIP downloads.
+- Default preview and export share `SheetPage`, including per-paper auto-fit and split-half styles.
+- A/B mode pairs different papers; A/A mirrors each paper.
+- Invalid chemistry reference values show validation errors instead of crashing.
+- jsPDF, PDF.js, Vitest and affected transitive dependencies were updated; `npm audit` reports zero vulnerabilities.
+- Production build and 108 automated tests pass. Browser checks covered invalid liquid n-factor, A/B pairing, per-paper auto-fit with the master off, matching preview/export fit values, and a successful PDF download. No browser console errors were observed during these checks.
+
+## Image Studio and Poster Maker
+
+Open **Image Studio** or **Poster Maker** from the home page. Both share a canvas:
+- Generate a background with Cloudflare FLUX.1 Schnell, or upload PNG/JPG/WebP locally.
+- Improve a Tamil or English image idea with Groq, then review it before generating.
+- Choose Seminar, Workshop or Science day, and edit the institution, title, subtitle, details, logo, alignment and accent.
+- Export a square, portrait, landscape or A4 poster to PNG or raster PDF. Original images can also be downloaded as PNG.
+- Poster editing and export work without AI credentials. Drafts stay in memory: download before navigating away or reloading.
+
+### Local secrets and startup
+
+Copy `.env.example` to `.env.local` if the latter does not already exist. Fill these values in a local editor:
+
+```dotenv
+GROQ_API_KEY=
+CLOUDFLARE_API_TOKEN=
+CLOUDFLARE_ACCOUNT_ID=
+GROQ_MODEL=openai/gpt-oss-20b
+```
+
+The Cloudflare token needs access to Workers AI for that account; the Account ID is the 32-character ID from the Cloudflare dashboard. Do not use `VITE_` prefixes. `.env.local` is Git-ignored. Restart `npm run dev` after editing secrets, then click **Check connection**. Connection status checks configuration presence, not credential validity; the first provider request verifies credentials.
+
+`npm run dev` serves the UI and `/api/studio/*` locally. `npm run build` followed by `npm run preview` also supports the API locally. The API runs only in Node, validates localhost Host/Origin headers, limits prompts and request size, times out provider calls, and does not return raw provider errors or secrets. It allows one active request, five requests/minute, 20 image attempts and 60 prompt attempts per UTC day per running process. Counters reset on restart; these are local safeguards, not a durable production billing limit.
+
+**Deployment:** the existing Firebase Hosting configuration serves static files only. It does not deploy this backend. Before enabling AI on the public site, deploy an authenticated server/function with server-side secrets and persistent per-user quotas, then route `/api/studio/*` to it. Do not expose the local development service publicly.
+
+Only the prompt is sent to the selected provider when its button is clicked. Uploaded logos/backgrounds and poster text are composed locally. The server fixes the image model and generation steps rather than accepting arbitrary model names from a client.
+
+Validation: 119 automated tests, production build, and local browser checks for Tamil text, templates, image upload, PNG/PDF download, and unconfigured-provider states. Provider calls are tested with mocked responses; live generation requires configured credentials.
+
+## WordCraft browser editor
+
+The Home page links to `/tools/wordcraft`, embedding the original Storytold WordCraft v0.9.0 web release. Open documents and save/download them using the editor's own controls. This integration adds no cloud document storage. The editor is also available directly at `/vendor/wordcraft/index.html`.
+
+Upstream release: https://github.com/storytold/wordcraft/releases/tag/v0.9.0
+Archive: `wordcraft-web-0.9.0.zip`
+Verified SHA256: `710d2f4dd95ac6234a043d15d8e82232d20330199dbdbc94159324eeb02631c1`
+
+Release files and MIT/Apache licenses are retained in `public/vendor/wordcraft`. Vite copies these into `dist` during production builds. Firebase Hosting headers configure the WASM MIME type and caching. Serve over HTTPS or localhost. This is upstream alpha software; feature availability and document compatibility follow the original editor. Building locally does not publish the site.
+
+### GridCraft and DeckCraft
+
+The same browser integration is available from Home for **GridCraft · Excel** (`/tools/gridcraft`) and **DeckCraft · PPT** (`/tools/deckcraft`). DeckCraft starts with a blank presentation. Files are opened and downloaded using the upstream editors; this does not add cloud storage or guarantee Microsoft Office feature parity. Download work before leaving the editor.
+
+Original releases, with ZIP SHA256 verified against GitHub release asset digests:
+
+- GridCraft v0.10.0: https://github.com/storytold/gridcraft/releases/tag/v0.10.0 — `41169381b006b32a795b22e86ee870eda9c58edbca97db9284c802851fef491d`
+- DeckCraft v0.5.0: https://github.com/storytold/deckcraft/releases/tag/v0.5.0 — `49d6aa4871dbfe4e2dd4ebc367db8fbfe6df6db6ba49872e10058e13175c5f51`
+
+Unmodified release assets, hosting notes, and MIT/Apache licenses are under `public/vendor/gridcraft` and `public/vendor/deckcraft`. The shared editor wrapper and Firebase static-asset headers cover all three Craft apps. No public deployment is performed by this integration.
+
+DeckCraft is pinned to v0.5.0: v0.9.0 and v0.8.0 panicked during browser startup (`no pids on this platform`). The unmodified v0.5.0 release loaded and passed a slide-title keyboard-edit smoke check. GridCraft passed a cell-edit smoke check. Automated text injection into these canvas editors dropped characters; keyboard events worked. Import/export compatibility has not been exhaustively tested.
+
+## Workspace UI and full editor source
+
+The refreshed dashboard groups tools into Office suite, Creative studio, and Teaching tools, with search, subject filters, a collapsible upcoming-tools section, and responsive navigation. The Craft editor header adds a consistent workspace return button and links that open sibling editors in separate tabs. The Rust editor internals are unchanged. Full Git source checkouts and their pinned revisions are documented in `upstream/README.md`.
+
+## Deepthi editor names and local-only navigation
+
+Workspace labels and canonical routes are Deepthi Docs (`/tools/docs`), Deepthi Sheets (`/tools/sheets`), and Deepthi Slides (`/tools/slides`). Earlier Craft routes remain supported. Vendor launch HTML is customized with these page titles and a same-origin Content Security Policy. `public/editor/local-only.js` blocks external window opens and generated anchor clicks, while permitting same-origin URLs and document blob downloads. Embedded editors also deny popups and top-level navigation through iframe sandboxing. Direct editor tabs load the same link policy.
+
+Editors are rebuilt from source with community/promotional buttons removed. About and contributor credits remain as plain text; external navigation remains blocked. MIT/Apache license files and copyright notices are retained. Reapply the HTML policy when upgrading vendor releases. External images, links and remote editor services are intentionally unavailable under this local-only policy.
+
+## Source-built Deepthi distribution
+
+See `upstream/BUILD.md` for pinned complete application source archives, local clones, reproducible patches and build instructions. This distribution removes community/promotional buttons inside the editor itself. Firebase deploys the browser application and static editors; the local Image Studio AI backend is not deployed to Hosting.

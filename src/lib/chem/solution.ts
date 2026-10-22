@@ -45,7 +45,8 @@ export interface LiquidPrep {
 export type PrepResult = SolidPrep | LiquidPrep
 
 export function equivalentWeight(chemical: Chemical): number {
-  if (chemical.nFactor <= 0) throw new Error('n-factor must be greater than zero')
+  if (!Number.isFinite(chemical.molarMass) || chemical.molarMass <= 0) throw new Error('Molar mass must be greater than zero')
+  if (!Number.isFinite(chemical.nFactor) || chemical.nFactor <= 0) throw new Error('n-factor must be greater than zero')
   return chemical.molarMass / chemical.nFactor
 }
 
@@ -60,11 +61,17 @@ export function stockStrength(chemical: Chemical): { normality: number; molarity
   if (chemical.state !== 'liquid' || !chemical.specificGravity) {
     throw new Error('Stock strength applies to concentrated liquids only')
   }
+  if (!Number.isFinite(chemical.specificGravity) || chemical.specificGravity <= 0) throw new Error('Specific gravity must be greater than zero')
+  validateAssay(chemical.assay)
   const gramsPerLitre = 10 * chemical.assay * chemical.specificGravity
   return {
     normality: gramsPerLitre / equivalentWeight(chemical),
     molarity: gramsPerLitre / chemical.molarMass,
   }
+}
+
+function validateAssay(assay: number): void {
+  if (!Number.isFinite(assay) || assay <= 0 || assay > 100) throw new Error('Purity must be greater than zero and at most 100%')
 }
 
 function round(value: number, places: number): number {
@@ -74,9 +81,10 @@ function round(value: number, places: number): number {
 
 export function prepare(request: PrepRequest): PrepResult {
   const { chemical, mode, strength, volumeMl, correctForAssay } = request
-  if (strength <= 0) throw new Error('Strength must be greater than zero')
-  if (volumeMl <= 0) throw new Error('Volume must be greater than zero')
+  if (!Number.isFinite(strength) || strength <= 0) throw new Error('Strength must be greater than zero')
+  if (!Number.isFinite(volumeMl) || volumeMl <= 0) throw new Error('Volume must be greater than zero')
 
+  validateAssay(chemical.assay)
   const litres = volumeMl / 1000
   const eq = equivalentWeight(chemical)
 
@@ -108,6 +116,7 @@ export function prepare(request: PrepRequest): PrepResult {
 
   const stock = stockStrength(chemical)
   const stockStrengthValue = mode === 'normality' ? stock.normality : stock.molarity
+  if (strength > stockStrengthValue) throw new Error('Requested strength exceeds the stock strength; dilution cannot produce it.')
   // V1 N1 = V2 N2, solved for the volume of concentrate to take.
   const takeMl = (strength * volumeMl) / stockStrengthValue
 

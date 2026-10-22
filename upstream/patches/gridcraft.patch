@@ -1,0 +1,62 @@
+diff --git a/ROADMAP.md b/ROADMAP.md
+index 070552d0..6baa2076 100644
+--- a/ROADMAP.md
++++ b/ROADMAP.md
+@@ -217,3 +217,7 @@ Ranked; estimates in Opus 5.5 agent-hours. Detail and the full beta-gate list in
+ | 2026-10-10 | minor | Checked against the alpha gate (six core workflows pass): stays alpha |
+ | 2026-10-10 | major | Re-measured against Excel for Mac 16.113.4: stage alpha, breadth ~75%, ready ~50%, ~160–240 h to beta, ~700–1,100 h to full parity; restructured to the progress-docs standard; detail moved to `docs/` |
+ | 2026-10-07 | major | First estimates: catalog 89%, functions ~93%, depth ~65%, ~35 h to alpha, ~215 h to full parity |
++
++## Deepthi distribution — 2026-10-22
++
++Removed external community/promotional controls from the UI and retained license and contributor notices as plain text. Rebuilt the browser application for the Deepthi workspace.
+diff --git a/crates/ui-egui/src/credits.rs b/crates/ui-egui/src/credits.rs
+index 5ab099c2..95d27cab 100644
+--- a/crates/ui-egui/src/credits.rs
++++ b/crates/ui-egui/src/credits.rs
+@@ -256,7 +256,7 @@ pub fn contributors_ui(ui: &mut egui::Ui) {
+                     if i > 0 {
+                         ui.label(RichText::new("·").weak());
+                     }
+-                    ui.hyperlink_to(c.name(v.names), format!("https://github.com/{}", c.login)).on_hover_text(c.summary());
++                    ui.label(c.name(v.names)).on_hover_text(c.summary());
+                 }
+             });
+         }
+@@ -279,7 +279,7 @@ fn table(ui: &mut egui::Ui, list: &[&Contributor], v: &mut View) {
+         }
+         ui.end_row();
+         for c in list {
+-            ui.hyperlink_to(c.name(v.names), format!("https://github.com/{}", c.login)).on_hover_text(c.summary());
++            ui.label(c.name(v.names)).on_hover_text(c.summary());
+             ui.label(group(c.prs));
+             ui.label(group(c.commits));
+             ui.label(group(c.lines_added));
+diff --git a/crates/ui-egui/src/dialogs.rs b/crates/ui-egui/src/dialogs.rs
+index fb899c70..bd66a179 100644
+--- a/crates/ui-egui/src/dialogs.rs
++++ b/crates/ui-egui/src/dialogs.rs
+@@ -776,7 +776,7 @@ impl Dialog {
+             "pickList" => Dialog::custom("pickList", "Pick From List", json!({})),
+             "saveCopy" => Dialog::custom("saveCopy", "Save a Copy", json!({"format": p("format")})),
+             "saveChanges" => Dialog::custom("saveChanges", "Save Changes?", json!({"title": p("title")})),
+-            "start" => Dialog::custom("start", "GridCraft", json!({})),
++            "start" => Dialog::custom("start", "Deepthi Sheets", json!({})),
+             "comments" => {
+                 app.grid.pane = None;
+                 app.run_or_alert("review.showComments", json!({"on": true}));
+@@ -1483,12 +1483,10 @@ fn about(ui: &mut egui::Ui, d: &mut Dialog) {
+         "Contributors" => crate::credits::contributors_ui(ui),
+         "Models" => crate::credits::models_ui(ui),
+         _ => {
+-            ui.heading("GridCraft");
++            ui.heading("Deepthi Sheets");
+             ui.label(format!("Version {}", env!("CARGO_PKG_VERSION")));
+             ui.add_space(4.0);
+-            ui.label("A clean-room, open-source, Rust-native spreadsheet. Part of ArtCraft.");
+-            ui.hyperlink_to("getartcraft.com/apps/gridcraft", "https://getartcraft.com/apps/gridcraft");
+-            ui.hyperlink_to("Join the ArtCraft Discord", "https://discord.gg/artcraft");
++            ui.label("A clean-room, open-source, Rust-native spreadsheet. Customized for Deepthi.work.");
+         }
+     }
+ }

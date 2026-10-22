@@ -26,6 +26,8 @@ export function SheetPage({ sheet, tokens, pageIndex, fit = 1, onEditPaper, onEd
       ? { onPaper: (paper: ParsedPaper) => onEditPaper(itemId, paper), onTokens: (patch: Partial<StyleTokens>) => onEditTokens(patch, itemId) }
       : undefined
 
+  const fitFor = (settings: StyleTokens) =>
+    settings.autoFit ? Math.max(settings.autoFitFloor, fit) : 1
   const dataAttr = pageIndex === undefined ? {} : { 'data-page-index': String(pageIndex) }
 
   if (sheet.kind === 'single') {
@@ -33,7 +35,7 @@ export function SheetPage({ sheet, tokens, pageIndex, fit = 1, onEditPaper, onEd
     const itemTokens = sheet.item.tokens ?? tokens
     const fontClass = `${itemTokens.fontFamily === 'sans' ? ' sheet--sans' : ''}${move ? ' sheet--move' : ''}`
     return (
-      <div className={`sheet${fontClass}`} style={sheetStyle(itemTokens, false, fit)} {...dataAttr}>
+      <div className={`sheet${fontClass}`} style={sheetStyle(itemTokens, false, fitFor(itemTokens))} {...dataAttr}>
         <PaperBody paper={sheet.item.paper} tokens={itemTokens} edit={move ? undefined : editorFor(sheet.item.id)} move={move} />
       </div>
     )
@@ -44,14 +46,14 @@ export function SheetPage({ sheet, tokens, pageIndex, fit = 1, onEditPaper, onEd
   const topFontClass = `${topTokens.fontFamily === 'sans' ? ' sheet--sans' : ''}${move ? ' sheet--move' : ''}`
 
   return (
-    <div className={`sheet sheet--split${topFontClass}`} style={sheetStyle(topTokens, true, fit)} {...dataAttr}>
-      <div className="sheet__half">
+    <div className={`sheet sheet--split${topFontClass}`} style={sheetStyle(topTokens, true, fitFor(topTokens))} {...dataAttr}>
+      <div className="sheet__half" style={sheetStyle(topTokens, true, fitFor(topTokens))}>
         {sheet.top.paper && <PaperBody paper={sheet.top.paper} tokens={topTokens} edit={move ? undefined : editorFor(sheet.top.id)} move={move} />}
       </div>
       <div className="sheet__cut">
         <span className="sheet__cut-label">cut here</span>
       </div>
-      <div className="sheet__half">
+      <div className="sheet__half" style={sheetStyle(bottomTokens, true, fitFor(bottomTokens))}>
         {sheet.bottom?.paper && (
           <PaperBody paper={sheet.bottom.paper} tokens={bottomTokens} edit={move ? undefined : editorFor(sheet.bottom.id)} move={move} />
         )}

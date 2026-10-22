@@ -65,7 +65,7 @@ export function Formatter({ onExit }: { onExit: () => void }) {
   const [items, setItems] = useState<Item[]>(() => restored?.items ?? [newItem(1)])
   const [activeItemId, setActiveItemId] = useState<string | null>(restored?.activeItemId ?? null)
   const [layout, setLayout] = useState<SheetLayout>(restored?.layout ?? 'single')
-  // Only the classic grid offers A / B; the Flutter UI always mirrors.
+  // The classic grid selects A/A or A/B; both interfaces share that setting.
   const [mirrorHalves, setMirrorHalves] = useState(restored?.mirrorHalves ?? true)
   // A/A: the same paper on both halves of one sheet — not a second item.
   const [format, setFormat] = useState<DownloadFormat>(restored?.format ?? 'pdf')
@@ -431,9 +431,8 @@ export function Formatter({ onExit }: { onExit: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // A split sheet carries the same paper twice. Two different papers on one
-  // sheet (A / B) is not offered, so buildSheets is always told to mirror.
-  const sheets = useMemo(() => buildSheets(items, layout, true), [items, layout])
+  // Both interfaces and export use the selected split-sheet mode.
+  const sheets = useMemo(() => buildSheets(items, layout, mirrorHalves), [items, layout, mirrorHalves])
 
   // Persist the workspace so a reload, or a trip to another page and back,
   // does not cost the user their work.
@@ -466,21 +465,25 @@ export function Formatter({ onExit }: { onExit: () => void }) {
 
   useLayoutEffect(() => {
     const stage = stageRef.current
-    if (!stage || !master.tokens.autoFit) return
-
-    const floor = master.tokens.autoFitFloor
+    if (!stage) return
     const next: Record<number, number> = { ...fits }
     let changed = false
 
     stage.querySelectorAll<HTMLElement>('[data-page-index]').forEach((page) => {
       const index = Number(page.dataset.pageIndex)
       const current = next[index] ?? 1
-      const clipped = Array.from(page.querySelectorAll<HTMLElement>('.sheet__body')).some(
-        (body) => body.scrollHeight > body.clientHeight + 1,
-      )
-      if (clipped && current > floor) {
-        next[index] = Math.max(floor, Number((current - 0.04).toFixed(3)))
-        changed = true
+      const sheet = sheets[index]
+      if (!sheet) return
+      const pageItems = sheet.kind === 'single' ? [sheet.item] : [sheet.top, sheet.bottom]
+      const bodies = Array.from(page.querySelectorAll<HTMLElement>('.sheet__body'))
+      const needsShrink = bodies.some((body, bodyIndex) => {
+        const settings = pageItems[bodyIndex]?.tokens ?? master.tokens
+        return settings.autoFit && current > settings.autoFitFloor &&
+          body.scrollHeight > body.clientHeight + 1
+      })
+      if (needsShrink) {
+        next[index] = Math.max(0.04, Number((current - 0.04).toFixed(3)))
+        changed = changed || next[index] !== current
       }
     })
 
@@ -503,7 +506,7 @@ export function Formatter({ onExit }: { onExit: () => void }) {
     try {
       if (format === 'text') {
         exportText(
-          ready.map((i) => ({ name: i.title, body: paperToText(i.paper!, master.tokens) })),
+          ready.map((i) => ({ name: i.title, body: paperToText(i.paper!, i.tokens ?? master.tokens) })),
           name,
         )
       } else if (format === 'separate-pdfs') {
@@ -600,7 +603,7 @@ export function Formatter({ onExit }: { onExit: () => void }) {
         const subName = item.paper?.header.courseTitle || item.tokens?.courseTitle || master.tokens.courseTitle || item.title || `Paper-${itemIdx + 1}`
         docs.push({
           name: subName,
-          pageIndices: pageIndices.length > 0 ? pageIndices : [0],
+          pageIndices,
         })
       })
 
@@ -1328,8 +1331,9 @@ function PreviewPane({
             className="preview__grid"
             style={{ gridTemplateColumns: `repeat(${perRow}, max-content)` }}
           >
-          {displayedSheets.map((sheet, i) => (
-            <div key={sheet.id} data-preview-page={i}>
+          {displayedSheets.map((sheet) => {
+            const i = sheets.indexOf(sheet)
+            return <div key={sheet.id} data-preview-page={i}>
               <div
                 style={{
                   width: A4_WIDTH_PX * scale,
@@ -1385,7 +1389,7 @@ function PreviewPane({
                 )}
               </div>
             </div>
-          ))}
+          })}
           </div>
         </div>
       )}

@@ -12,7 +12,7 @@ import type {
   SheetLayout,
   StyleTokens,
 } from '../types'
-import { PaperBody, sheetStyle } from './sheet/PaperBody'
+import { SheetPage } from './sheet/SheetPage'
 import { parseRawText, recomputeTotal } from '../lib/parser'
 import { InlineTableEditor } from './InlineTableEditor'
 import { extractFile } from '../lib/extract'
@@ -80,7 +80,7 @@ export function FlutterLayout({
   activeItemId,
   layout,
   sheets,
-  fits: _fits,
+  fits,
   busy,
   onTokens,
   onTokensAll,
@@ -282,7 +282,7 @@ export function FlutterLayout({
     }
     const timer = setTimeout(check, 140)
     return () => clearTimeout(timer)
-  }, [activePaper, activeTokens, layout, sheets, scale, centerView])
+  }, [activePaper, activeTokens, layout, sheets, fits, scale, centerView])
 
   // Tapping the tab you are already on does nothing: it used to close the
   // panel, so a second tap on Content dropped you onto the sheet you were not
@@ -1489,37 +1489,13 @@ export function FlutterLayout({
                     element, so they must come from the paper on screen —
                     reading the master's copy is why the header font sliders
                     appeared to do nothing. */}
-                {visibleSheets.map((sheet, index) => (
-                  <article
-                    key={index}
-                    className={`sheet ${sheet.kind === 'split' ? 'sheet--split' : ''}`}
-                    style={sheetStyle(activeTokens)}
-                  >
-                    {sheet.kind === 'single' ? (
-                      <PaperBody
-                        paper={activePaper ?? sheet.item.paper!}
-                        tokens={activeTokens}
-                      />
-                    ) : (
-                      <>
-                        <div className="sheet__half sheet__half--top">
-                          <PaperBody
-                            paper={sheet.top.paper!}
-                            tokens={activeTokens}
-                          />
-                        </div>
-                        {activeTokens.showCutLine && <div className="sheet__cut" aria-hidden="true" />}
-                        <div className="sheet__half sheet__half--bottom">
-                          {sheet.bottom && (
-                            <PaperBody
-                              paper={sheet.bottom.paper!}
-                              tokens={{ ...activeTokens, ...(sheet.bottom.tokens ?? {}) }}
-                            />
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </article>
+                {visibleSheets.map((sheet) => (
+                  <SheetPage
+                    key={sheet.id}
+                    sheet={sheet}
+                    tokens={tokens}
+                    fit={fits[sheets.indexOf(sheet)] ?? 1}
+                  />
                 ))}
               </div>
             ) : (

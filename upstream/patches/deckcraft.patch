@@ -1,0 +1,111 @@
+diff --git a/ROADMAP.md b/ROADMAP.md
+index 801ddd8..9f48e22 100644
+--- a/ROADMAP.md
++++ b/ROADMAP.md
+@@ -144,3 +144,7 @@ app's JSON control channel (`deckcraft --control PORT`).
+ | 2026-10-10 | minor | Stage checked against the new core-workflow gate: passes, stays alpha |
+ | 2026-10-10 | major | Restructured to craftrules `standards/progress-docs.md`: stage, two numbers, dimensions, features, languages; parity estimate moved to docs/target-app-parity.md, "Working today" to its evidence section, the alpha checklist to docs/roadmap.md |
+ | 2026-10-07 | major | Alpha checklist (~80% to a self-defined alpha), breadth ~80%, overall ~62%, ~190 h to full parity |
++
++## Deepthi distribution — 2026-10-22
++
++Removed external community/promotional controls from the UI and retained license and contributor notices as plain text. Rebuilt the browser application for the Deepthi workspace.
+diff --git a/crates/ui-egui/src/credits.rs b/crates/ui-egui/src/credits.rs
+index 765dec1..84253f5 100644
+--- a/crates/ui-egui/src/credits.rs
++++ b/crates/ui-egui/src/credits.rs
+@@ -256,7 +256,7 @@ pub fn contributors_ui(ui: &mut egui::Ui) {
+                     if i > 0 {
+                         ui.label(RichText::new("·").weak());
+                     }
+-                    ui.hyperlink_to(c.name(v.names), format!("https://github.com/{}", c.login)).on_hover_text(c.summary());
++                    ui.label(c.name(v.names)).on_hover_text(c.summary());
+                 }
+             });
+         }
+@@ -279,7 +279,7 @@ fn table(ui: &mut egui::Ui, list: &[&Contributor], v: &mut View) {
+         }
+         ui.end_row();
+         for c in list {
+-            ui.hyperlink_to(c.name(v.names), format!("https://github.com/{}", c.login)).on_hover_text(c.summary());
++            ui.label(c.name(v.names)).on_hover_text(c.summary());
+             ui.label(group(c.prs));
+             ui.label(group(c.commits));
+             ui.label(group(c.lines_added));
+diff --git a/crates/ui-egui/src/dialogs.rs b/crates/ui-egui/src/dialogs.rs
+index 73ce180..64719b5 100644
+--- a/crates/ui-egui/src/dialogs.rs
++++ b/crates/ui-egui/src/dialogs.rs
+@@ -55,8 +55,8 @@ fn title(id: &str) -> &'static str {
+         "chartData" => "Chart Data",
+         "trim" => "Trim Media",
+         "smartart" => "Choose a SmartArt Graphic",
+-        "quit" => "DeckCraft",
+-        _ => "DeckCraft",
++        "quit" => "Deepthi Slides",
++        _ => "Deepthi Slides",
+     }
+ }
+ 
+@@ -791,15 +791,12 @@ pub fn about(_app: &mut SlideApp, ui: &mut Ui) {
+     ui.vertical_centered(|ui| {
+         let (r, _) = ui.allocate_exact_size(vec2(64.0, 64.0), Sense::hover());
+         paint_logo(ui.painter(), r);
+-        ui.label(egui::RichText::new("DeckCraft").font(theme::bold(22.0)));
++        ui.label(egui::RichText::new("Deepthi Slides").font(theme::bold(22.0)));
+         ui.label(egui::RichText::new(version_line()).color(t.text_dim));
+         ui.add_space(6.0);
+         ui.label("Presentations and slide shows, rebuilt from scratch in pure Rust.");
+         ui.label("An open-source, clean-room project. Not affiliated with Microsoft.");
+         ui.add_space(6.0);
+-        ui.hyperlink_to("Join our community on Discord", deckcraft_engine::links::DISCORD);
+-        ui.hyperlink_to("getartcraft.com/apps/deckcraft", deckcraft_engine::links::APP_PAGE);
+-        ui.hyperlink_to("Source on GitHub", deckcraft_engine::links::GITHUB);
+         ui.add_space(6.0);
+         ui.label(egui::RichText::new("MIT OR Apache-2.0 · © 2026 ArtCraft Team and the DeckCraft contributors").size(11.0).color(t.text_faint));
+     });
+@@ -845,7 +842,7 @@ pub fn start_screen(app: &mut SlideApp, ui: &mut Ui) {
+             ui.add_space(40.0);
+             let (r, _) = ui.allocate_exact_size(vec2(40.0, 40.0), Sense::hover());
+             paint_logo(ui.painter(), r);
+-            ui.label(egui::RichText::new("DeckCraft").font(theme::bold(26.0)));
++            ui.label(egui::RichText::new("Deepthi Slides").font(theme::bold(26.0)));
+         });
+         if app.home_open() {
+             let title = app.session.active().map(|d| d.title()).unwrap_or_default();
+@@ -909,7 +906,6 @@ pub fn start_screen(app: &mut SlideApp, ui: &mut Ui) {
+         ui.add_space(30.0);
+         ui.horizontal(|ui| {
+             ui.add_space(40.0);
+-            ui.hyperlink_to("Join the ArtCraft community on Discord", deckcraft_engine::links::DISCORD);
+         });
+     });
+ }
+diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
+index bef64a4..c3d11a1 100644
+--- a/crates/ui-egui/src/lib.rs
++++ b/crates/ui-egui/src/lib.rs
+@@ -161,7 +161,6 @@ pub const UI_COMMANDS: &[(&str, &str, Option<&str>, &str)] = &[
+     ("app.saveAsDialog", "Save As…", None, "{}"),
+     ("app.exportDialog", "Export…", None, "{}"),
+     ("app.dialog", "Open Dialog", None, "{id}"),
+-    ("app.links", "Community Links", None, "{}"),
+ ];
+ 
+ pub struct Perf {
+diff --git a/crates/ui-egui/src/ribbon.rs b/crates/ui-egui/src/ribbon.rs
+index c7c251e..2ee6dfc 100644
+--- a/crates/ui-egui/src/ribbon.rs
++++ b/crates/ui-egui/src/ribbon.rs
+@@ -1755,11 +1755,6 @@ fn record(app: &mut SlideApp, ui: &mut Ui) {
+             }
+         }
+     });
+-    group(ui, |ui| {
+-        if big_button(ui, Icon::Help, "Learn\nMore", true).clicked() {
+-            app.open_url(deckcraft_engine::links::APP_PAGE);
+-        }
+-    });
+ }
+ 
+ fn review(app: &mut SlideApp, ui: &mut Ui) {
