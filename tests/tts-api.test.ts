@@ -15,7 +15,7 @@ async function start(config: TtsConfig = {}, upstream = vi.fn<typeof fetch>()) {
 const config = { ELEVENLABS_API_KEY: 'private-secret', ELEVENLABS_VOICE_ID: 'voice123' }
 it('reports missing configuration and never calls provider', async () => {
   const { base, post, upstream } = await start()
-  expect(await (await fetch(`${base}/status`)).json()).toEqual({ configured: false, provider: null })
+  expect(await (await fetch(`${base}/status`)).json()).toMatchObject({ configured: false, provider: null })
   expect((await post({ text: 'Hello', language: 'en' })).status).toBe(503)
   expect(upstream).not.toHaveBeenCalled()
 })
@@ -45,7 +45,7 @@ it('generates Gemini WAV with selected voice and controlled style', async () => 
   const wav = Buffer.alloc(48); wav.write('RIFF'); wav.write('WAVE', 8)
   const upstream = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ steps: [{ type: 'model_output', content: [{ type: 'audio', data: wav.toString('base64') }] }] })))
   const { post, base } = await start({ GEMINI_API_KEY: 'gemini-secret' }, upstream)
-  expect(await (await fetch(`${base}/status`)).json()).toEqual({ configured: true, provider: 'gemini' })
+  expect(await (await fetch(`${base}/status`)).json()).toMatchObject({ configured: true, provider: 'gemini' })
   const response = await post({ text: 'வணக்கம்', language: 'ta', voice: 'Puck', style: 'calm' })
   expect(response.headers.get('content-type')).toBe('audio/wav')
   expect(Buffer.from(await response.arrayBuffer())).toEqual(wav)
@@ -59,4 +59,11 @@ it('rejects unsupported voices and malformed Gemini audio', async () => {
   expect((await post({ text: 'Hello', language: 'en', voice: '../bad' })).status).toBe(400)
   expect(upstream).not.toHaveBeenCalled()
   expect((await post({ text: 'Hello', language: 'en' })).status).toBe(502)
+})
+it('rejects invalid conversion settings before provider usage', async () => {
+ const {post,upstream}=await start({GEMINI_API_KEY:'secret'})
+ for (const extra of [{speed:0},{pitch:13},{format:'exe'},{volume:3},{startPause:-1},{normalize:'yes'},{dialogue:true}]) {
+  expect((await post({text:'Hello',language:'en',...extra})).status).toBe(400)
+ }
+ expect(upstream).not.toHaveBeenCalled()
 })

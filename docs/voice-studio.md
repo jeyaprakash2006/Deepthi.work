@@ -17,3 +17,11 @@ Set `GEMINI_API_KEY` in `.env.local` and restart Vite. Gemini takes priority whe
 Free-tier scripts may be used by Google to improve products. The UI discloses this before generation. Production backend deployment and credentials are still required to enable this on Firebase Hosting; adding a key locally does not activate the public website.
 
 Reference: https://ai.google.dev/gemini-api/docs/speech-generation
+
+## Extended narration controls
+
+The studio now offers 30 Gemini prebuilt voices, voice search, 20 language choices (Gemini detects spoken language from the script), seven narration styles and A:/B: multi-speaker scripts. TXT and SRT import is limited to 500 KB and 3,000 characters; SRT timing is intentionally not retained. Script export and approximate word-based duration are available.
+
+Local FFmpeg enables WAV, 192 kbps MP3 and AAC/M4A conversion, 0.5–2× speed, ±12 semitone pitch, volume, optional −16 LUFS loudness normalization, and start/end silence. Capability is checked before generation; unavailable conversion settings are disabled. Normalization determines final loudness after the volume adjustment. Temporary audio files are removed after conversion.
+
+This is a Narakeet-inspired TTS workflow, not the Narakeet service or full feature parity. Narakeet proprietary voices, SSML, exact subtitle alignment, presentation/video rendering, background music mixing, and batch jobs are not included. Public hosting still requires a protected backend with credentials and FFmpeg for natural generation/exports.
