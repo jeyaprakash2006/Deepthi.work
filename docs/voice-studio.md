@@ -9,3 +9,11 @@ The API is deliberately localhost-only, with body limits, timeouts, a single act
 Firebase Hosting serves the UI only. To enable online generation, deploy an authenticated server endpoint with protected credentials, durable per-user quotas and matching hosting rewrites. Do not expose keys in client environment variables or remove the localhost restriction to publish the current development handler.
 
 Reference: https://elevenlabs.io/docs/api-reference/text-to-speech/convert
+
+## Gemini
+
+Set `GEMINI_API_KEY` in `.env.local` and restart Vite. Gemini takes priority when both providers are configured. The adapter uses `gemini-3.8-flash-tts` through the Interactions endpoint, with Kore/Puck/Aoede voices and three curated narration styles. Language is detected from script text. Unary output is a complete WAV file; it is validated for RIFF/WAVE headers and downloaded as `.wav`, not mislabeled as MP3. ElevenLabs retains MP3 output.
+
+Free-tier scripts may be used by Google to improve products. The UI discloses this before generation. Production backend deployment and credentials are still required to enable this on Firebase Hosting; adding a key locally does not activate the public website.
+
+Reference: https://ai.google.dev/gemini-api/docs/speech-generation

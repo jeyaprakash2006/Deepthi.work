@@ -15,7 +15,7 @@ async function start(config: TtsConfig = {}, upstream = vi.fn<typeof fetch>()) {
 const config = { ELEVENLABS_API_KEY: 'private-secret', ELEVENLABS_VOICE_ID: 'voice123' }
 it('reports missing configuration and never calls provider', async () => {
   const { base, post, upstream } = await start()
-  expect(await (await fetch(`${base}/status`)).json()).toEqual({ configured: false })
+  expect(await (await fetch(`${base}/status`)).json()).toEqual({ configured: false, provider: null })
   expect((await post({ text: 'Hello', language: 'en' })).status).toBe(503)
   expect(upstream).not.toHaveBeenCalled()
 })
@@ -40,4 +40,23 @@ it('sanitizes upstream failures and releases the generation slot', async () => {
   expect(response.status).toBe(502); expect(await response.text()).not.toContain('private-secret')
   expect((await post({ text: 'Hi', language: 'en' })).status).toBe(502)
   expect(upstream).toHaveBeenCalledTimes(2)
+})
+it('generates Gemini WAV with selected voice and controlled style', async () => {
+  const wav = Buffer.alloc(48); wav.write('RIFF'); wav.write('WAVE', 8)
+  const upstream = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ steps: [{ type: 'model_output', content: [{ type: 'audio', data: wav.toString('base64') }] }] })))
+  const { post, base } = await start({ GEMINI_API_KEY: 'gemini-secret' }, upstream)
+  expect(await (await fetch(`${base}/status`)).json()).toEqual({ configured: true, provider: 'gemini' })
+  const response = await post({ text: 'வணக்கம்', language: 'ta', voice: 'Puck', style: 'calm' })
+  expect(response.headers.get('content-type')).toBe('audio/wav')
+  expect(Buffer.from(await response.arrayBuffer())).toEqual(wav)
+  const payload = JSON.parse(String(upstream.mock.calls[0][1]?.body))
+  expect(payload.generation_config.speech_config).toEqual([{ voice: 'Puck' }])
+  expect(payload.input[0].content[0].text).toBe('வணக்கம்')
+})
+it('rejects unsupported voices and malformed Gemini audio', async () => {
+  const upstream = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ steps: [] })))
+  const { post } = await start({ GEMINI_API_KEY: 'gemini-secret' }, upstream)
+  expect((await post({ text: 'Hello', language: 'en', voice: '../bad' })).status).toBe(400)
+  expect(upstream).not.toHaveBeenCalled()
+  expect((await post({ text: 'Hello', language: 'en' })).status).toBe(502)
 })

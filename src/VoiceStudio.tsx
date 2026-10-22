@@ -8,17 +8,20 @@ export function VoiceStudio({ onExit }: { onExit: () => void }) {
   const [voice, setVoice] = useState('')
   const [rate, setRate] = useState(1)
   const [speaking, setSpeaking] = useState(false)
+  const [provider, setProvider] = useState<string | null>(null)
+  const [naturalVoice, setNaturalVoice] = useState('Kore')
+  const [style, setStyle] = useState('story')
   const [connected, setConnected] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [audio, setAudio] = useState<{ url: string; text: string } | null>(null)
+  const [audio, setAudio] = useState<{ url: string; text: string; extension: 'wav' | 'mp3' } | null>(null)
   const request = useRef<AbortController | null>(null)
   const utterance = useRef<SpeechSynthesisUtterance | null>(null)
   const supported = 'speechSynthesis' in window
   const available = voices.filter(v => v.lang.toLowerCase().startsWith(language))
   useEffect(() => {
     const controller = new AbortController()
-    fetch('/api/voice/status', { signal: controller.signal }).then(async r => r.ok && r.headers.get('content-type')?.includes('application/json') ? r.json() : null).then(data => setConnected(Boolean(data?.configured))).catch(() => {})
+    fetch('/api/voice/status', { signal: controller.signal }).then(async r => r.ok && r.headers.get('content-type')?.includes('application/json') ? r.json() : null).then(data => { setConnected(Boolean(data?.configured)); setProvider(data?.provider ?? null) }).catch(() => {})
     if (!supported) return () => { controller.abort(); request.current?.abort() }
     const update = () => setVoices(window.speechSynthesis.getVoices())
     update(); window.speechSynthesis.addEventListener('voiceschanged', update)
@@ -42,12 +45,12 @@ export function VoiceStudio({ onExit }: { onExit: () => void }) {
     const controller = new AbortController(); request.current = controller
     const timer = window.setTimeout(() => controller.abort(), 100000)
     try {
-      const response = await fetch('/api/voice/generate', { method: 'POST', signal: controller.signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: script, language }) })
+      const response = await fetch('/api/voice/generate', { method: 'POST', signal: controller.signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: script, language, voice: naturalVoice, style }) })
       if (!response.ok || !response.headers.get('content-type')?.startsWith('audio/')) {
         const data = response.headers.get('content-type')?.includes('application/json') ? await response.json() : null
         throw new Error(data?.error ?? 'Natural voice is not connected on this site yet.')
       }
-      setAudio({ url: URL.createObjectURL(await response.blob()), text: script })
+      setAudio({ url: URL.createObjectURL(await response.blob()), text: script, extension: response.headers.get('content-type')?.includes('wav') ? 'wav' : 'mp3' })
     } catch (err) { setError(err instanceof Error && err.name !== 'AbortError' ? err.message : 'Generation cancelled or timed out.') }
     finally { clearTimeout(timer); setBusy(false) }
   }
@@ -65,9 +68,9 @@ export function VoiceStudio({ onExit }: { onExit: () => void }) {
         <label>Preview speed <span>{rate.toFixed(1)}×</span><input type="range" min="0.5" max="1.5" step="0.1" value={rate} onChange={e => { stop(); setRate(Number(e.target.value)) }} /></label>
         <button className="voice-preview" disabled={!supported || !text.trim() || busy} onClick={speaking ? stop : preview}>{speaking ? '■ Stop preview' : '▶ Listen to device preview'}</button>
         <small>Uses your device’s voices. Preview voice and speed apply only to device playback; preview cannot be downloaded.</small>
-        <div className="voice-natural"><div className="voice-section-head"><h3>Natural voice · MP3</h3><span>{connected ? 'Connected' : 'Not connected'}</span></div><p>{connected ? 'Generate with the configured ElevenLabs voice. Your script is sent to ElevenLabs when you generate.' : 'Natural voice needs a server connection. Device preview is available with installed voices.'}</p><button className="voice-generate" disabled={!connected || !text.trim() || busy} onClick={generate}>{busy ? 'Creating your voice…' : 'Generate natural voice'}</button>{busy && <button onClick={() => request.current?.abort()}>Cancel generation</button>}</div>
+        <div className="voice-natural"><div className="voice-section-head"><h3>Natural voice · {provider === 'elevenlabs' ? 'MP3' : 'WAV'}</h3><span>{connected ? 'Connected' : 'Not connected'}</span></div><p>{connected ? provider === 'gemini' ? 'Generate Tamil or English narration with Gemini. Your script is sent to Google; free-tier content may be used to improve its products.' : 'Generate with the configured ElevenLabs voice. Your script is sent to ElevenLabs when you generate.' : 'Natural voice needs a server connection. Device preview is available with installed voices.'}</p>{provider !== 'elevenlabs' && <><label>Natural voice<select value={naturalVoice} disabled={busy} onChange={e => setNaturalVoice(e.target.value)}>{['Kore', 'Puck', 'Aoede'].map(name => <option key={name}>{name}</option>)}</select></label><label>Narration style<select value={style} disabled={busy} onChange={e => setStyle(e.target.value)}><option value="story">Happy storytelling</option><option value="calm">Calm teacher</option><option value="energetic">Energetic narration</option></select></label></>}<button className="voice-generate" disabled={!connected || !text.trim() || busy} onClick={generate}>{busy ? 'Creating your voice…' : 'Generate natural voice'}</button>{busy && <button onClick={() => request.current?.abort()}>Cancel generation</button>}</div>
       </aside></div>
       {error && <p className="voice-error" role="alert">{error}</p>}
-      {audio && <section className="voice-result"><div><h2>Your narration is ready</h2><p>{audio.text !== text ? 'This audio is from an earlier version of your script.' : 'Listen, download and add it to your story.'}</p></div><audio controls src={audio.url} /><a href={audio.url} download="deepthi-narration.mp3">↓ Download MP3</a></section>}
+      {audio && <section className="voice-result"><div><h2>Your narration is ready</h2><p>{audio.text !== text ? 'This audio is from an earlier version of your script.' : 'Listen, download and add it to your story.'}</p></div><audio controls src={audio.url} /><a href={audio.url} download={`deepthi-narration.${audio.extension}`}>↓ Download {audio.extension.toUpperCase()}</a></section>}
     </main></div>
 }
