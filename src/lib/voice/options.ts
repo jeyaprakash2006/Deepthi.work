@@ -15,3 +15,8 @@ export function outputSegments(text:string, output:string) {
  if(!parts.length || parts.length>5) throw new Error('Use 1–5 paragraphs for separate audio files.')
  return parts
 }
+export const EMOTIONS: Record<string,string> = {neutral:'Neutral',happy:'Happy',sad:'Sad',angry:'Angry',excited:'Excited',calm:'Calm',fearful:'Fearful',surprised:'Surprised',hopeful:'Hopeful',empathetic:'Empathetic',serious:'Serious',whispering:'Whispering'}
+const EMOTION_DIRECTIONS: Record<string,string> = {neutral:'balanced and emotionally neutral',happy:'happy, smiling and joyful',sad:'sad, subdued and sorrowful',angry:'angry, frustrated and firm without uncontrolled shouting',excited:'excited, enthusiastic and animated',calm:'calm, relaxed and soothing',fearful:'fearful, nervous and hesitant',surprised:'surprised and astonished',hopeful:'hopeful and optimistic',empathetic:'empathetic, compassionate and reassuring',serious:'serious, focused and earnest',whispering:'quiet, intimate and whispered'}
+export function deliveryDirection(style:string, types:string[], emotion:string, intensity:number) {
+  return `${STYLES[style]}. Vocal character: ${types.length?types.join(', '):'natural'}. Prioritize this emotional delivery over conflicting style cues: ${EMOTION_DIRECTIONS[emotion]}. Emotional intensity: ${['','subtle','gentle','moderate','strong','very expressive'][intensity]}. Keep the words unchanged; do not read these directions aloud.`
+}

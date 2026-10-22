@@ -35,3 +35,9 @@ Output can be one file or up to five paragraph files bundled in a ZIP. Completed
 Background audio can be a generated ambient/bright tone bed or a user-selected MP3/WAV up to 3 MB. FFmpeg loops the bed, mixes it at the selected level, and limits peaks to avoid clipping. Uploaded music is handled by the local audio server and is not sent to Gemini. Temporary files are removed.
 
 Dictation uses browser SpeechRecognition when supported, requires microphone permission, and may use the browser vendor's online service. It appends recognized words up to the script limit. It has not been microphone-tested automatically.
+
+## Emotions and pitch presets
+
+Twelve emotion choices (neutral, happy, sad, angry, excited, calm, fearful, surprised, hopeful, empathetic, serious, whispering) have five intensity levels. Dialogue supports independent A/B emotion and intensity. Gemini receives these as structured speech style metadata, with emotion taking priority over conflicting narration-style cues. These are generative performance directions, not guaranteed deterministic effects. ElevenLabs does not expose these controls here.
+
+Pitch presets map to −8, −4, 0, +4 and +8 semitones. Fine adjustment is in 0.5-semitone steps across −12 to +12, with a reset button. FFmpeg applies pitch independently of the requested speech rate. Pitch processing needs the connected encoder. The selected natural-voice preview uses the same emotion, intensity and pitch settings; device preview does not synthesize emotions.

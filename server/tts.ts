@@ -1,4 +1,4 @@
-import { VOICES, LANGUAGES, STYLES, VOICE_TYPES, scriptParts } from '../src/lib/voice/options'
+import { VOICES, LANGUAGES, STYLES, VOICE_TYPES, EMOTIONS, deliveryDirection, scriptParts } from '../src/lib/voice/options'
 import { hasEncoder, processAudio } from './voice-audio'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 export interface TtsConfig { GEMINI_API_KEY?: string; ELEVENLABS_API_KEY?: string; ELEVENLABS_VOICE_ID?: string }
@@ -31,6 +31,11 @@ export function createTtsHandler(config: TtsConfig, fetcher: typeof fetch = fetc
       if (!VOICES.includes(voice) || !VOICES.includes(secondVoice) || !Object.hasOwn(STYLES, style)) return json(400, { error: 'Choose a supported voice and style.' })
       const options = { format: body.format ?? (gemini ? 'wav' : 'mp3'), speed: body.speed ?? 1, pitch: body.pitch ?? 0, volume: body.volume ?? 1, normalize: body.normalize ?? false, startPause: body.startPause ?? 0, endPause: body.endPause ?? 0, music: body.music ?? '', musicVolume: body.musicVolume ?? 0.15 }
       if (!['wav','mp3','m4a'].includes(options.format) || typeof options.normalize !== 'boolean' || ![[options.speed,0.5,2],[options.pitch,-12,12],[options.volume,0,2],[options.startPause,0,5],[options.endPause,0,5]].every(([v,min,max]) => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max)) return json(400,{error:'Invalid audio settings.'})
+      const emotion=body.emotion ?? 'neutral'
+      const secondEmotion=body.secondEmotion ?? emotion
+      const emotionIntensity=body.emotionIntensity ?? 3
+      const secondEmotionIntensity=body.secondEmotionIntensity ?? emotionIntensity
+      if (![emotion,secondEmotion].every(e=>typeof e==='string' && Object.hasOwn(EMOTIONS,e)) || ![emotionIntensity,secondEmotionIntensity].every(i=>Number.isInteger(i)&&i>=1&&i<=5)) return json(400,{error:'Choose a supported emotion and intensity from 1 to 5.'})
       const voiceTypes=body.voiceTypes ?? []
       if (!Array.isArray(voiceTypes) || voiceTypes.length>6 || voiceTypes.some(t=>!VOICE_TYPES.includes(t))) return json(400,{error:'Choose up to six supported voice directions.'})
       if (typeof options.music !== 'string' || typeof options.musicVolume !== 'number' || !Number.isFinite(options.musicVolume) || options.musicVolume<0 || options.musicVolume>1) return json(400,{error:'Invalid music settings.'})
@@ -56,7 +61,7 @@ export function createTtsHandler(config: TtsConfig, fetcher: typeof fetch = fetc
       if (gemini) {
         const response = await fetcher('https://generativelanguage.googleapis.com/v1beta/interactions', {
           method: 'POST', signal: AbortSignal.timeout(90000), headers: { 'x-goog-api-key': config.GEMINI_API_KEY!, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: 'gemini-3.8-flash-tts', input: [{ type: 'user_input', content: parts.map(part => ({type:'text',text:part.text,annotations:[{type:'speech_metadata',style:STYLES[style] + (voiceTypes.length ? '. Vocal delivery: '+voiceTypes.join(', ') : ''),...('speaker' in part ? {speaker:part.speaker} : {})}]})) }], response_format: { type: 'audio' }, generation_config: { speech_config: body.dialogue ? {speakers:[{speaker:'A',voice},{speaker:'B',voice:secondVoice}]} : [{ voice }] } }),
+          body: JSON.stringify({ model: 'gemini-3.8-flash-tts', input: [{ type: 'user_input', content: parts.map(part => ({type:'text',text:part.text,annotations:[{type:'speech_metadata',style:deliveryDirection(style,voiceTypes,'speaker' in part && part.speaker==='B'?secondEmotion:emotion,'speaker' in part && part.speaker==='B'?secondEmotionIntensity:emotionIntensity),...('speaker' in part ? {speaker:part.speaker} : {})}]})) }], response_format: { type: 'audio' }, generation_config: { speech_config: body.dialogue ? {speakers:[{speaker:'A',voice},{speaker:'B',voice:secondVoice}]} : [{ voice }] } }),
         })
         if (!response.ok) return json(response.status === 429 ? 429 : 502, { error: 'Gemini could not generate audio. Check API access and quota, then retry.' })
         const data = await response.json()

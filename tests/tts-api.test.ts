@@ -72,3 +72,20 @@ it('rejects invalid music and voice directions without billing',async()=>{
  for(const extra of [{voiceTypes:['invented']},{voiceTypes:Array(7).fill('Warm')},{music:Buffer.from('not audio').toString('base64')},{musicVolume:4}]) expect((await post({text:'Hello',language:'en',...extra})).status).toBe(400)
  expect(upstream).not.toHaveBeenCalled()
 })
+it('validates emotions before any provider call',async()=>{
+ const {post,upstream}=await start({GEMINI_API_KEY:'secret'})
+ for(const extra of [{emotion:'fake'},{emotionIntensity:0},{emotionIntensity:2.5},{secondEmotion:'fake'},{secondEmotionIntensity:6}]) expect((await post({text:'Hi',language:'en',...extra})).status).toBe(400)
+ expect(upstream).not.toHaveBeenCalled()
+})
+it('sends distinct emotions and intensities for dialogue speakers',async()=>{
+ const wav=Buffer.alloc(48);wav.write('RIFF');wav.write('WAVE',8)
+ const upstream=vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({steps:[{type:'model_output',content:[{type:'audio',data:wav.toString('base64')}]}]})))
+ const {post}=await start({GEMINI_API_KEY:'secret'},upstream)
+ expect((await post({text:'A: Hello!\nB: Goodbye.',language:'en',dialogue:true,emotion:'happy',emotionIntensity:5,secondEmotion:'sad',secondEmotionIntensity:1})).status).toBe(200)
+ const parts=JSON.parse(String(upstream.mock.calls[0][1]?.body)).input[0].content
+ expect(parts[0].annotations[0].style).toContain('happy, smiling')
+ expect(parts[0].annotations[0].style).toContain('very expressive')
+ expect(parts[1].annotations[0].style).toContain('sad, subdued')
+ expect(parts[1].annotations[0].style).toContain('subtle')
+ expect(parts[1].annotations[0].speaker).toBe('B')
+})
