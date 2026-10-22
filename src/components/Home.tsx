@@ -39,17 +39,17 @@ interface Tool {
 const TOOLS: Tool[] = [
   { id: 'voice-studio', name: 'Voice Studio', blurb: 'Turn Tamil and English scripts into spoken stories, lessons and narration.', icon: <span aria-hidden="true">♫</span>, tone: 'green', subject: 'Any subject', path: '/tools/voice-studio' },
   {
-    id: 'wordcraft', name: 'Deepthi Docs',
+    id: 'wordcraft', name: 'Quill — Document Editor',
     blurb: 'Write, format and polish your documents in one place.',
     icon: <PaperToolIcon size={22} />, tone: 'indigo', subject: 'Any subject', path: '/tools/docs',
   },
   {
-    id: 'gridcraft', name: 'Deepthi Sheets',
+    id: 'gridcraft', name: 'Ledger — Spreadsheet',
     blurb: 'Organize data, work with formulas and make every cell count.',
     icon: <ChartIcon size={22} />, tone: 'green', subject: 'Any subject', path: '/tools/sheets',
   },
   {
-    id: 'deckcraft', name: 'Deepthi Slides',
+    id: 'deckcraft', name: 'Deck — Presentation Studio',
     blurb: 'Turn your ideas into slides ready to present.',
     icon: <PaperToolIcon size={22} />, tone: 'amber', subject: 'Any subject', path: '/tools/slides',
   },
@@ -184,7 +184,7 @@ export function Home({ onOpen }: { onOpen: (path: string) => void }) {
 
         {!query && category === 'All tools' && <section className="workspace-hero" aria-label="Office suite">
           <div><span className="workspace-eyebrow">YOUR OFFICE, RIGHT HERE</span><h2>From a blank page<br />to your next big idea.</h2><p>Documents, spreadsheets and presentations.<br />Choose your canvas and make it yours.</p><button onClick={() => { setCategory('Office suite'); setSubject('All') }}>Explore office suite <span aria-hidden="true">↗</span></button></div>
-          <div className="workspace-art" aria-hidden="true"><div className="mini-sheet mini-sheet--grid"><b>S</b><div className="mini-cells" /></div><div className="mini-sheet mini-sheet--doc"><b>D</b><strong>A fresh start.</strong><i /><i /><i /><i /></div><div className="mini-sheet mini-sheet--deck"><b>S</b><div className="mini-chart"><i /><i /><i /></div><span>Ideas worth sharing.</span></div></div>
+          <div className="workspace-art" aria-hidden="true"><div className="mini-sheet mini-sheet--grid"><b>L</b><div className="mini-cells" /></div><div className="mini-sheet mini-sheet--doc"><b>Q</b><strong>A fresh start.</strong><i /><i /><i /><i /></div><div className="mini-sheet mini-sheet--deck"><b>D</b><div className="mini-chart"><i /><i /><i /></div><span>Ideas worth sharing.</span></div></div>
         </section>}
         {papers.length > 0 && (
           <section className="resume">
