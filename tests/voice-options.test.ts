@@ -5,3 +5,9 @@ it('parses dialogue without reading speaker labels aloud',()=>{
  expect(()=>scriptParts('Unlabelled line',true)).toThrow()
  expect(scriptParts('A: ordinary prose',false)).toEqual([{type:'text',text:'A: ordinary prose'}])
 })
+it('splits paragraph output and bounds batch size',async()=>{
+ const {outputSegments}=await import('../src/lib/voice/options')
+ expect(outputSegments('First\n\nSecond','paragraphs')).toEqual(['First','Second'])
+ expect(outputSegments('First\nSecond','single')).toEqual(['First\nSecond'])
+ expect(()=>outputSegments(Array(6).fill('text').join('\n\n'),'paragraphs')).toThrow()
+})

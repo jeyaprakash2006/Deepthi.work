@@ -4,7 +4,7 @@ Open `/tools/voice-studio`. Script drafts are stored on this device. Device prev
 
 For natural MP3 generation locally, set `ELEVENLABS_API_KEY` and `ELEVENLABS_VOICE_ID` in `.env.local`, then restart Vite. The configured voice must be available to the API account. The server uses Eleven v3, Tamil/English language codes, and MP3 44.1kHz/128kbps. Generation sends the script to ElevenLabs and consumes its quota. Device preview settings do not change natural generation.
 
-The API is deliberately localhost-only, with body limits, timeouts, a single active generation, 3 attempts/minute and 20/day (in-memory, reset on process restart). These are local guardrails, not production account quotas.
+The API is deliberately localhost-only, with body limits, timeouts, a single active generation, 10 attempts/minute and 20/day (in-memory, reset on process restart). These are local guardrails, not production account quotas.
 
 Firebase Hosting serves the UI only. To enable online generation, deploy an authenticated server endpoint with protected credentials, durable per-user quotas and matching hosting rewrites. Do not expose keys in client environment variables or remove the localhost restriction to publish the current development handler.
 
@@ -20,8 +20,18 @@ Reference: https://ai.google.dev/gemini-api/docs/speech-generation
 
 ## Extended narration controls
 
-The studio now offers 30 Gemini prebuilt voices, voice search, 20 language choices (Gemini detects spoken language from the script), seven narration styles and A:/B: multi-speaker scripts. TXT and SRT import is limited to 500 KB and 3,000 characters; SRT timing is intentionally not retained. Script export and approximate word-based duration are available.
+The studio now offers 30 Gemini prebuilt voices, voice search, 21 language choices (Gemini detects spoken language from the script), seven narration styles and A:/B: multi-speaker scripts. TXT, DOCX and SRT import is limited to 500 KB and 3,000 characters; SRT timing is intentionally not retained. Script export and approximate word-based duration are available.
 
 Local FFmpeg enables WAV, 192 kbps MP3 and AAC/M4A conversion, 0.5–2× speed, ±12 semitone pitch, volume, optional −16 LUFS loudness normalization, and start/end silence. Capability is checked before generation; unavailable conversion settings are disabled. Normalization determines final loudness after the volume adjustment. Temporary audio files are removed after conversion.
 
-This is a Narakeet-inspired TTS workflow, not the Narakeet service or full feature parity. Narakeet proprietary voices, SSML, exact subtitle alignment, presentation/video rendering, background music mixing, and batch jobs are not included. Public hosting still requires a protected backend with credentials and FFmpeg for natural generation/exports.
+This is a Narakeet-inspired TTS workflow, not the Narakeet service or full feature parity. Narakeet proprietary voices, SSML, exact subtitle alignment, presentation/video rendering, full Narakeet music catalog and advanced batch jobs are not included. Public hosting still requires a protected backend with credentials and FFmpeg for natural generation/exports.
+
+## Screenshot reference controls
+
+Voice preview generates a short sample using the selected Gemini voice. The 18 voice-type checkboxes are vocal delivery directions (up to six), not Narakeet catalog filters; they do not guarantee the requested gender/age/character sound. Speaker + enables A/B dialogue. Speed and volume presets drive the actual export controls.
+
+Output can be one file or up to five paragraph files bundled in a ZIP. Completed files remain downloadable if a later paragraph fails or is cancelled. Each paragraph and preview consumes one provider request.
+
+Background audio can be a generated ambient/bright tone bed or a user-selected MP3/WAV up to 3 MB. FFmpeg loops the bed, mixes it at the selected level, and limits peaks to avoid clipping. Uploaded music is handled by the local audio server and is not sent to Gemini. Temporary files are removed.
+
+Dictation uses browser SpeechRecognition when supported, requires microphone permission, and may use the browser vendor's online service. It appends recognized words up to the script limit. It has not been microphone-tested automatically.

@@ -67,3 +67,8 @@ it('rejects invalid conversion settings before provider usage', async () => {
  }
  expect(upstream).not.toHaveBeenCalled()
 })
+it('rejects invalid music and voice directions without billing',async()=>{
+ const {post,upstream}=await start({GEMINI_API_KEY:'secret'})
+ for(const extra of [{voiceTypes:['invented']},{voiceTypes:Array(7).fill('Warm')},{music:Buffer.from('not audio').toString('base64')},{musicVolume:4}]) expect((await post({text:'Hello',language:'en',...extra})).status).toBe(400)
+ expect(upstream).not.toHaveBeenCalled()
+})

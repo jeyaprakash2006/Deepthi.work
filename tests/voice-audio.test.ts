@@ -7,7 +7,7 @@ it('produces real WAV, MP3 and M4A containers with audio processing',async conte
  for(let i=0;i<24000;i++)pcm.writeInt16LE(Math.round(Math.sin(i*2*Math.PI*440/24000)*8000),i*2)
  const source=Buffer.concat([header,pcm])
  for(const format of ['wav','mp3','m4a']){
-  const result=await processAudio(source,{format,speed:1.2,pitch:2,volume:0.8,normalize:false,startPause:0.5,endPause:0.5})
+  const result=await processAudio(source,{format,speed:1.2,pitch:2,volume:0.8,normalize:false,startPause:0.5,endPause:0.5,music:format==='mp3'?'ambient':format==='m4a'?source.toString('base64'):'',musicVolume:0.2})
   expect(result.length).toBeGreaterThan(100)
   if(format==='wav')expect(result.toString('ascii',0,4)).toBe('RIFF')
   if(format==='m4a')expect(result.toString('ascii',4,8)).toBe('ftyp')

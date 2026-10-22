@@ -1,4 +1,4 @@
-import { VOICES, LANGUAGES, STYLES, scriptParts } from '../src/lib/voice/options'
+import { VOICES, LANGUAGES, STYLES, VOICE_TYPES, scriptParts } from '../src/lib/voice/options'
 import { hasEncoder, processAudio } from './voice-audio'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 export interface TtsConfig { GEMINI_API_KEY?: string; ELEVENLABS_API_KEY?: string; ELEVENLABS_VOICE_ID?: string }
@@ -21,7 +21,7 @@ export function createTtsHandler(config: TtsConfig, fetcher: typeof fetch = fetc
     let ownsSlot = false
     try {
       let raw = ''
-      for await (const chunk of req) { raw += chunk.toString(); if (Buffer.byteLength(raw) > 24000) return json(413, { error: 'Script is too large.' }) }
+      for await (const chunk of req) { raw += chunk.toString(); if (Buffer.byteLength(raw) > 4300000) return json(413, { error: 'Script is too large.' }) }
       let body
       try { body = JSON.parse(raw) } catch { return json(400, { error: 'Invalid JSON.' }) }
       if (!body || typeof body.text !== 'string' || !body.text.trim() || body.text.length > 3000 || !Object.hasOwn(LANGUAGES, body.language ?? '')) return json(400, { error: 'Enter 1–3,000 characters and choose Tamil or English.' })
@@ -29,12 +29,20 @@ export function createTtsHandler(config: TtsConfig, fetcher: typeof fetch = fetc
       const secondVoice = body.secondVoice ?? 'Puck'
       const style = body.style ?? 'story'
       if (!VOICES.includes(voice) || !VOICES.includes(secondVoice) || !Object.hasOwn(STYLES, style)) return json(400, { error: 'Choose a supported voice and style.' })
-      const options = { format: body.format ?? (gemini ? 'wav' : 'mp3'), speed: body.speed ?? 1, pitch: body.pitch ?? 0, volume: body.volume ?? 1, normalize: body.normalize ?? false, startPause: body.startPause ?? 0, endPause: body.endPause ?? 0 }
+      const options = { format: body.format ?? (gemini ? 'wav' : 'mp3'), speed: body.speed ?? 1, pitch: body.pitch ?? 0, volume: body.volume ?? 1, normalize: body.normalize ?? false, startPause: body.startPause ?? 0, endPause: body.endPause ?? 0, music: body.music ?? '', musicVolume: body.musicVolume ?? 0.15 }
       if (!['wav','mp3','m4a'].includes(options.format) || typeof options.normalize !== 'boolean' || ![[options.speed,0.5,2],[options.pitch,-12,12],[options.volume,0,2],[options.startPause,0,5],[options.endPause,0,5]].every(([v,min,max]) => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max)) return json(400,{error:'Invalid audio settings.'})
+      const voiceTypes=body.voiceTypes ?? []
+      if (!Array.isArray(voiceTypes) || voiceTypes.length>6 || voiceTypes.some(t=>!VOICE_TYPES.includes(t))) return json(400,{error:'Choose up to six supported voice directions.'})
+      if (typeof options.music !== 'string' || typeof options.musicVolume !== 'number' || !Number.isFinite(options.musicVolume) || options.musicVolume<0 || options.musicVolume>1) return json(400,{error:'Invalid music settings.'})
+      if (options.music && !['ambient','bright'].includes(options.music)) {
+        if(options.music.length>4000000 || !/^[A-Za-z0-9+/=]+$/.test(options.music)) return json(400,{error:'Choose an MP3 or WAV under 3 MB.'})
+        const bytes=Buffer.from(options.music,'base64')
+        if(!(bytes.toString('ascii',0,3)==='ID3' || (bytes[0]===255 && (bytes[1]&224)===224) || (bytes.toString('ascii',0,4)==='RIFF' && bytes.toString('ascii',8,12)==='WAVE'))) return json(400,{error:'Choose a valid MP3 or WAV music file.'})
+      }
       let parts
       try { parts = scriptParts(body.text.trim(), body.dialogue === true) } catch { return json(400,{error:'Start every dialogue line with A: or B:.'}) }
       if (!gemini && body.dialogue) return json(400,{error:'Dialogue requires Gemini.'})
-      const needsProcessing = options.format !== (gemini ? 'wav' : 'mp3') || options.speed !== 1 || options.pitch !== 0 || options.volume !== 1 || options.normalize || options.startPause !== 0 || options.endPause !== 0
+      const needsProcessing = options.format !== (gemini ? 'wav' : 'mp3') || options.speed !== 1 || options.pitch !== 0 || options.volume !== 1 || options.normalize || options.startPause !== 0 || options.endPause !== 0 || Boolean(options.music)
       if (needsProcessing && !await encoder) return json(503,{error:'Audio conversion is not available on this server.'})
       const sendAudio = async (bytes:Buffer) => {
         const output = needsProcessing ? await processAudio(bytes,options) : bytes
@@ -43,12 +51,12 @@ export function createTtsHandler(config: TtsConfig, fetcher: typeof fetch = fetc
       }
       if (!configured) return json(503, { error: 'Natural voice is not connected yet. Use device preview for now.' })
       requests = requests.filter(time => Date.now() - time < 86400000)
-      if (active || requests.length >= 20 || requests.filter(time => Date.now() - time < 60000).length >= 3) return json(429, { error: 'Voice usage limit reached. Please try later.' })
+      if (active || requests.length >= 20 || requests.filter(time => Date.now() - time < 60000).length >= 10) return json(429, { error: 'Voice usage limit reached. Please try later.' })
       active = true; ownsSlot = true; requests.push(Date.now())
       if (gemini) {
         const response = await fetcher('https://generativelanguage.googleapis.com/v1beta/interactions', {
           method: 'POST', signal: AbortSignal.timeout(90000), headers: { 'x-goog-api-key': config.GEMINI_API_KEY!, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: 'gemini-3.8-flash-tts', input: [{ type: 'user_input', content: parts.map(part => ({type:'text',text:part.text,annotations:[{type:'speech_metadata',style:STYLES[style],...('speaker' in part ? {speaker:part.speaker} : {})}]})) }], response_format: { type: 'audio' }, generation_config: { speech_config: body.dialogue ? {speakers:[{speaker:'A',voice},{speaker:'B',voice:secondVoice}]} : [{ voice }] } }),
+          body: JSON.stringify({ model: 'gemini-3.8-flash-tts', input: [{ type: 'user_input', content: parts.map(part => ({type:'text',text:part.text,annotations:[{type:'speech_metadata',style:STYLES[style] + (voiceTypes.length ? '. Vocal delivery: '+voiceTypes.join(', ') : ''),...('speaker' in part ? {speaker:part.speaker} : {})}]})) }], response_format: { type: 'audio' }, generation_config: { speech_config: body.dialogue ? {speakers:[{speaker:'A',voice},{speaker:'B',voice:secondVoice}]} : [{ voice }] } }),
         })
         if (!response.ok) return json(response.status === 429 ? 429 : 502, { error: 'Gemini could not generate audio. Check API access and quota, then retry.' })
         const data = await response.json()
