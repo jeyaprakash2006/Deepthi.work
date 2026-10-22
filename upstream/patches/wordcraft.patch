@@ -1,8 +1,8 @@
 diff --git a/ROADMAP.md b/ROADMAP.md
-index 5a9fbf09..d668372f 100644
+index 5a9fbf09..89844215 100644
 --- a/ROADMAP.md
 +++ b/ROADMAP.md
-@@ -776,3 +776,7 @@ Footer page-table height and body wrapping are corrected. Other pagination gaps
+@@ -776,3 +776,11 @@ Footer page-table height and body wrapping are corrected. Other pagination gaps
  | 2026-10-15 | trivial | Progress log: mixed Hebrew/Latin text keeps its order in Word (#1543) |
  | 2026-10-15 | trivial | Progress log: ruler numbers by zoom, rulers follow the caret's page (#1878) |
  | 2026-10-17 | trivial | Progress log: saving into a folder that refuses a temporary file (#2138) |
@@ -10,8 +10,106 @@ index 5a9fbf09..d668372f 100644
 +## Deepthi distribution — 2026-10-22
 +
 +Removed external community/promotional controls from the UI and retained license and contributor notices as plain text. Rebuilt the browser application for the Deepthi workspace.
++
++### 2026-10-23 — Native Question Paper template
++
++Added an original, editable one-page A4 examination template to File > New and Home. The engine command creates the document directly; no formatter or import screen is involved. Covered opening, pagination, DOCX round-trip and editing in an engine test.
+diff --git a/crates/engine/src/cmd/file.rs b/crates/engine/src/cmd/file.rs
+index 118ed41b..5353efb1 100644
+--- a/crates/engine/src/cmd/file.rs
++++ b/crates/engine/src/cmd/file.rs
+@@ -64,7 +64,7 @@ fn rename(s: &mut Session, v: &Value) -> CmdResult {
+ pub fn specs() -> Vec<CommandSpec> {
+     vec![
+         CommandSpec::new("file.rename", "Rename Document", "File › Info", rename).params(r#"{"name": string (document name without its extension)}"#).pure(),
+-        CommandSpec::new("file.new", "New", "File", new).key("Mod+N").params(r#"{"template"?: "blank|sample|letter|resume|report"}"#).pure(),
++        CommandSpec::new("file.new", "New", "File", new).key("Mod+N").params(r#"{"template"?: "blank|sample|letter|resume|report|question-paper"}"#).pure(),
+         CommandSpec::new("file.open", "Open", "File", open)
+             .key("Mod+O / Mod+F12 / Mod+Alt+F2")
+             .params(r#"{"path": string, "data"?: base64 (the file's bytes; `path` then only names it), "password"?: string (for a password-protected Word document)}"#)
+@@ -188,6 +188,7 @@ fn new(s: &mut Session, v: &Value) -> CmdResult {
+         "letter" => crate::sample::letter(),
+         "resume" => crate::sample::resume(),
+         "report" => crate::sample::report(),
++        "question-paper" => crate::sample::question_paper(),
+         _ => normal_document(s),
+     };
+     s.set_document(doc);
+diff --git a/crates/engine/src/sample.rs b/crates/engine/src/sample.rs
+index fd5ac643..25441d67 100644
+--- a/crates/engine/src/sample.rs
++++ b/crates/engine/src/sample.rs
+@@ -207,14 +207,67 @@ pub fn report() -> Document {
+     d
+ }
+ 
++/// An editable A4 examination paper, opened directly by File > New.
++pub fn question_paper() -> Document {
++    let mut d = Document::new();
++    d.last_section.page_w = 595.28;
++    d.last_section.page_h = 841.89;
++    d.last_section.margin_top = 42.0;
++    d.last_section.margin_bottom = 42.0;
++    d.last_section.margin_left = 48.0;
++    d.last_section.margin_right = 48.0;
++    let line = |text: &str, heading: bool, centered: bool| {
++        let mut p =
++            Paragraph::with_text(text, CharProps { size: Some(if heading { 12.0 } else { 11.0 }), bold: Some(heading), ..Default::default() });
++        p.props.align = Some(if centered { Align::Center } else { Align::Left });
++        p.props.space_after = Some(7.0);
++        p.props.keep_next = Some(heading);
++        para_block(p)
++    };
++    d.body = vec![
++        line("[SCHOOL / COLLEGE NAME]", true, true),
++        line("[Department / Class]", false, true),
++        line("[EXAMINATION TITLE]", true, true),
++        line("[Course code] - [Subject name]", true, true),
++        line("Name: ____________________    Register no.: ____________________", false, false),
++        line("Semester / Class: __________    Date: __________", false, false),
++        line("Time: 3 hours                                      Maximum marks: 100", true, false),
++        line("Instructions: Answer all questions. Write clearly and show your working.", false, false),
++        line("PART A - Short answers (10 x 2 = 20 marks)", true, true),
++    ];
++    for n in 1..=10 {
++        d.body.push(line(&format!("{n}. [Enter a short-answer question.]"), false, false));
++    }
++    d.body.push(line("PART B - Detailed answers (5 x 16 = 80 marks)", true, true));
++    for n in 11..=15 {
++        d.body.push(line(&format!("{n}. [Enter a detailed-answer question.]"), false, false));
++    }
++    d
++}
++
+ #[cfg(test)]
+ mod tests {
+     use super::*;
+ 
++    #[test]
++    fn question_paper_opens_as_editable_a4_document() {
++        let mut session = crate::Session::new(Document::new());
++        session.run("file.new", &serde_json::json!({"template": "question-paper"})).unwrap();
++        assert_eq!(session.doc.body.len(), 25);
++        assert!((session.doc.last_section.page_w - 595.28).abs() < 0.01);
++        assert_eq!(session.export_layout().pages.len(), 1);
++        let bytes = wordcraft_docx::write(&session.doc).unwrap();
++        let reopened = wordcraft_docx::read(&bytes).unwrap();
++        assert_eq!(reopened.word_count(), session.doc.word_count());
++        assert_eq!(reopened.body.len(), session.doc.body.len());
++        session.run("text.insert", &serde_json::json!({"text": "Test School "})).unwrap();
++        assert!(session.doc.word_count() > question_paper().word_count());
++    }
++
+     #[test]
+     fn samples_are_valid() {
+         assert_eq!(sample_document().word_count(), 361);
+-        for d in [sample_document(), letter(), resume(), report()] {
++        for d in [sample_document(), letter(), resume(), report(), question_paper()] {
+             assert!(d.word_count() > 5);
+             let l = wordcraft_layout::layout(&d, &mut wordcraft_layout::LayoutCache::new(), &Default::default());
+             assert!(!l.pages.is_empty());
 diff --git a/crates/ui-egui/src/backstage.rs b/crates/ui-egui/src/backstage.rs
-index ac07f842..04c691e9 100644
+index ac07f842..a7626b94 100644
 --- a/crates/ui-egui/src/backstage.rs
 +++ b/crates/ui-egui/src/backstage.rs
 @@ -129,7 +129,7 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
@@ -36,6 +134,33 @@ index ac07f842..04c691e9 100644
                      }
                  }
              });
+@@ -283,8 +279,14 @@ fn template_tile(ui: &mut Ui, app: &mut WordApp, label: &str, template: &str) {
+ }
+ 
+ /// The built-in templates in gallery order: display label and the `file.new` template id.
+-const TEMPLATES: [(&str, &str); 5] =
+-    [("Blank document", "blank"), ("Studio handbook (sample)", "sample"), ("Letter", "letter"), ("Résumé", "resume"), ("Report", "report")];
++const TEMPLATES: [(&str, &str); 6] = [
++    ("Blank document", "blank"),
++    ("Question Paper", "question-paper"),
++    ("Studio handbook (sample)", "sample"),
++    ("Letter", "letter"),
++    ("Résumé", "resume"),
++    ("Report", "report"),
++];
+ 
+ /// How many templates Home shows before "More templates" (the rest are on New).
+ const HOME_TEMPLATES: usize = 4;
+@@ -689,7 +691,8 @@ mod tests {
+     #[test]
+     fn template_search_matches_labels_case_insensitively() {
+         let ids = |q: &str| matching_templates(q).into_iter().map(|(_, id)| id).collect::<Vec<_>>();
+-        assert_eq!(ids(""), ["blank", "sample", "letter", "resume", "report"]);
++        assert_eq!(ids(""), ["blank", "question-paper", "sample", "letter", "resume", "report"]);
++        assert_eq!(ids("question"), ["question-paper"]);
+         assert_eq!(ids("  LETTER "), ["letter"]);
+         assert_eq!(ids("re"), ["resume", "report"]);
+         assert_eq!(ids("résumé"), ["resume"]);
 diff --git a/crates/ui-egui/src/chrome.rs b/crates/ui-egui/src/chrome.rs
 index b5b63d14..bc3a8055 100644
 --- a/crates/ui-egui/src/chrome.rs

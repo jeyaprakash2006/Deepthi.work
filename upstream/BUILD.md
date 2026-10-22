@@ -18,3 +18,5 @@ npm test
 Packaging generates unique asset filenames, preserves the Deepthi title, local-only navigation script and CSP, and removes stale integrity metadata. Optional craft-fonts inputs are not required; these builds use the bundled fallback fonts. The private/unavailable `storytold/craftrules` referenced by upstream instructions could not be retrieved.
 
 Changes remove community buttons from Docs title bar, backstage and Help ribbon; remove their settings toggle and keyboard hint; remove promotional website/Discord/GitHub links from About/start screens; remove Slides' promotional Learn More action; and render contributor names as plain text. The host policy remains defense in depth for document hyperlinks.
+
+Quill includes an original editable A4 Question Paper template in File > New (also on Home). The template is implemented by the engine `file.new` command with id `question-paper`; no upload or import is needed.

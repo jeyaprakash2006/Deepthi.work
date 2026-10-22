@@ -40,7 +40,7 @@ const TOOLS: Tool[] = [
   { id: 'voice-studio', name: 'Voice Studio', blurb: 'Turn Tamil and English scripts into spoken stories, lessons and narration.', icon: <span aria-hidden="true">♫</span>, tone: 'green', subject: 'Any subject', path: '/tools/voice-studio' },
   {
     id: 'wordcraft', name: 'Quill — Document Editor',
-    blurb: 'Write, format and polish your documents in one place.',
+    blurb: 'Write and format documents. Start exam papers with the Question Paper template in File → New.',
     icon: <PaperToolIcon size={22} />, tone: 'indigo', subject: 'Any subject', path: '/tools/docs',
   },
   {
@@ -62,15 +62,6 @@ const TOOLS: Tool[] = [
     id: 'poster-maker', name: 'Poster Maker',
     blurb: 'Create event posters with editable Tamil and English text, your logo and a fresh image.',
     icon: <StampIcon size={22} />, tone: 'rose', subject: 'Any subject', path: '/tools/poster-maker',
-  },
-  {
-    id: 'question-paper',
-    name: 'Question Paper Formatter',
-    blurb: 'Clone a paper’s layout once, then pour any input into it and print A4.',
-    icon: <PaperToolIcon size={22} />,
-    tone: 'indigo',
-    subject: 'Any subject',
-    path: '/tools/question-paper',
   },
   {
     id: 'chem-lab',
