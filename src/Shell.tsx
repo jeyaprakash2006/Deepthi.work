@@ -1,5 +1,6 @@
 /** Routes the site: the workbench at "/", each tool on its own path. */
 import { WordCraft, type CraftEditorId } from './WordCraft'
+import { VoiceStudio } from './VoiceStudio'
 import { ImageStudio } from './ImageStudio'
 import { Home } from './components/Home'
 import { Formatter } from './App'
@@ -20,6 +21,7 @@ export default function Shell() {
   if (path.startsWith('/tools/image-studio') || path.startsWith('/tools/poster-maker')) {
     return <ImageStudio initialMode={path.includes('image-studio') ? 'image' : 'poster'} onExit={() => go('/')} />
   }
+  if (path.startsWith('/tools/voice-studio')) return <VoiceStudio onExit={() => go('/')} />
   if (path.startsWith('/tools/question-paper')) {
     return <Formatter onExit={() => go('/')} />
   }

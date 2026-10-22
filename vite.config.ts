@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { defineConfig, loadEnv } from 'vite'
 import { createAiHandler } from './server/ai'
+import { createTtsHandler } from './server/tts'
 import react from '@vitejs/plugin-react'
 
 /**
@@ -20,11 +21,12 @@ const cacheDir = join(
 export default defineConfig(({ mode }) => {
   const env = { ...loadEnv(mode, process.cwd(), ''), ...process.env }
   const api = createAiHandler(env)
+  const voiceApi = createTtsHandler(env)
   return {
   plugins: [react(), {
     name: 'local-studio-api',
-    configureServer(server) { server.middlewares.use(api) },
-    configurePreviewServer(server) { server.middlewares.use(api) },
+    configureServer(server) { server.middlewares.use(api); server.middlewares.use(voiceApi) },
+    configurePreviewServer(server) { server.middlewares.use(api); server.middlewares.use(voiceApi) },
   }],
   cacheDir,
   server: { host: '127.0.0.1', port: 5173 },

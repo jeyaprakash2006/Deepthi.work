@@ -37,6 +37,7 @@ interface Tool {
 }
 
 const TOOLS: Tool[] = [
+  { id: 'voice-studio', name: 'Voice Studio', blurb: 'Turn Tamil and English scripts into spoken stories, lessons and narration.', icon: <span aria-hidden="true">♫</span>, tone: 'green', subject: 'Any subject', path: '/tools/voice-studio' },
   {
     id: 'wordcraft', name: 'Deepthi Docs',
     blurb: 'Write, format and polish your documents in one place.',
@@ -141,7 +142,7 @@ export function Home({ onOpen }: { onOpen: (path: string) => void }) {
     const matchesSubject = subject === 'All' || tool.subject === subject
     const q = query.trim().toLowerCase()
     const matchesQuery = !q || tool.name.toLowerCase().includes(q) || tool.blurb.toLowerCase().includes(q)
-    const matchesCategory = category === 'All tools' || (category === 'Office suite' ? ['wordcraft', 'gridcraft', 'deckcraft'].includes(tool.id) : category === 'Creative studio' ? ['image-studio', 'poster-maker'].includes(tool.id) : ['question-paper', 'chem-lab', 'formula-sheet', 'mark-analysis', 'timetable', 'answer-key'].includes(tool.id))
+    const matchesCategory = category === 'All tools' || (category === 'Office suite' ? ['wordcraft', 'gridcraft', 'deckcraft'].includes(tool.id) : category === 'Creative studio' ? ['image-studio', 'poster-maker', 'voice-studio'].includes(tool.id) : ['question-paper', 'chem-lab', 'formula-sheet', 'mark-analysis', 'timetable', 'answer-key'].includes(tool.id))
     return matchesSubject && matchesQuery && matchesCategory
   })
 
